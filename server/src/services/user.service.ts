@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { ApiError } from "../utils/ApiHelpers";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
-import prisma from "../db/db";
+import prisma from "../db";
 
 class UserService {
   options: null | {

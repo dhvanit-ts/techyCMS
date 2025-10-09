@@ -10,6 +10,7 @@ interface BaseOptions {
   fallbackErrorMessage?: string;
   returnNullIfError?: boolean;
   throwIfError?: boolean;
+  finallyDoThis?: () => void;
 }
 
 interface WithData extends BaseOptions {
@@ -54,8 +55,9 @@ class Fetcher {
       fallbackErrorMessage,
       returnNullIfError = false,
       throwIfError = false,
+      finallyDoThis,
     }: BaseOptions
-  ) {
+  ): Promise<T | null | unknown> {
     try {
       const response = await axios.request<T>({
         url: `${this.baseUrl}${endpointPath}`,
@@ -75,6 +77,8 @@ class Fetcher {
       this.handleError(error, onError, fallbackErrorMessage);
       if (throwIfError) throw error;
       return returnNullIfError ? null : (error as unknown);
+    } finally {
+      finallyDoThis?.();
     }
   }
 
@@ -87,7 +91,12 @@ class Fetcher {
   }
 
   patch<T>(options: WithData) {
-    return this.request<T>("PATCH", options.endpointPath, options.data, options);
+    return this.request<T>(
+      "PATCH",
+      options.endpointPath,
+      options.data,
+      options
+    );
   }
 }
 

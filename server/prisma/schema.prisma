@@ -19,37 +19,37 @@ model Admin {
   updatedAt    DateTime @default(now()) @updatedAt()
 }
 
-model Page {
-  id     String @id @default(uuid())
-  title  String
-  slug   String @unique
-  html   String
-  css    String
-  js     String
-  status String
+model Component {
+  id       String @id @default(uuid())
+  name     String
+  category String
+  html     String @db.Text
+  css      String @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt()
 
-  assets Assets[]
+  @@index([id])
+  @@index([name])
+  @@index([category])
+}
+
+// more schemas can be added here
+
+model Page {
+  id       String @id @default(uuid())
+  title    String
+  slug     String @unique
+  html     String @db.Text
+  css      String @db.Text
+  status   String
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt()
 
   @@index([id])
   @@index([slug])
-}
-
-model Assets {
-  id     String @id @default(uuid())
-  type   String
-  url    String
-  pageId String
-
-  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt()
-
-  @@index([id])
-  @@index([pageId])
 }
 
 enum AuthType {

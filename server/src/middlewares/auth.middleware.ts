@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiHelpers";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import handleError from "../utils/handleError";
 import { env } from "../conf/env";
-import prisma from "../db/db";
+import prisma from "../db";
 
 const verifyAdminJWT = async (
   req: Request,

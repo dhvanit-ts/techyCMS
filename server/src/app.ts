@@ -7,6 +7,7 @@ import http from 'http';
 // routes
 import healthRouter from "./routes/health.route";
 import adminRouter from "./routes/admin.route";
+import pagesRouter from "./routes/pages.route";
 
 const app = express();
 const server = http.createServer(app);
@@ -39,5 +40,6 @@ io.on('connection', (socket) => {
 // routes
 app.use("/api/v1/health", healthRouter)
 app.use("/api/v1/admin", adminRouter)
+app.use("/api/v1/pages", pagesRouter)
 
 export default server;

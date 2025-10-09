@@ -8,7 +8,7 @@ import { env } from "../conf/env";
 import bcrypt from "bcryptjs";
 import nodeCache from "../services/cache.service";
 import axios from "axios";
-import prisma from "../db/db";
+import prisma from "../db";
 
 const userService = new UserService();
 
