@@ -1,7 +1,15 @@
 import { Request, Response } from "express";
 import prisma from "../db/index";
 
-export const getPages = async (req: Request, res: Response) => {};
+export const getPages = async (req: Request, res: Response) => {
+  try {
+    const pages = await prisma.page.findMany();
+    return res.status(200).json({ data: pages });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve pages" });
+  }
+};
 
 export const getPage = async (req: Request, res: Response) => {
   try {
@@ -21,7 +29,25 @@ export const getPage = async (req: Request, res: Response) => {
 
 export const publishPage = async (req: Request, res: Response) => {};
 
-export const updatePage = async (req: Request, res: Response) => {};
+export const updatePage = async (req: Request, res: Response) => {
+  try {
+    const page = await prisma.page.findUnique({
+      where: { slug: req.params.id },
+    });
+    if (page) {
+      const updatedPage = await prisma.page.update({
+        where: { slug: req.params.id },
+        data: req.body,
+      });
+      return res.status(200).json({ data: updatedPage });
+    } else {
+      return res.status(404).json({ error: "Page not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update page" });
+  }
+};
 
 export const savePage = async (req: Request, res: Response) => {
   try {

@@ -33,6 +33,7 @@ class Fetcher {
     fallbackErrorMessage?: string
   ) {
     onError?.(error instanceof Error ? error : undefined);
+
     if (isAxiosError(error)) {
       toast.error(
         error.response?.data?.error ??
@@ -48,6 +49,19 @@ class Fetcher {
     method: Method,
     endpointPath: string,
     data: unknown | undefined,
+    options: BaseOptions & { returnNullIfError: true }
+  ): Promise<T | null>;
+  private async request<T>(
+    method: Method,
+    endpointPath: string,
+    data: unknown | undefined,
+    options: BaseOptions
+  ): Promise<T>;
+
+  private async request<T>(
+    method: Method,
+    endpointPath: string,
+    data: unknown | undefined,
     {
       statusShouldBe = 200,
       onError,
@@ -57,7 +71,7 @@ class Fetcher {
       throwIfError = false,
       finallyDoThis,
     }: BaseOptions
-  ): Promise<T | null | unknown> {
+  ): Promise<T | null> {
     try {
       const response = await axios.request<T>({
         url: `${this.baseUrl}${endpointPath}`,
@@ -71,33 +85,32 @@ class Fetcher {
       if (!response.data) throw new ApiError(500, "No data found");
 
       onSuccess?.(response.data);
-
       return response.data;
     } catch (error) {
       this.handleError(error, onError, fallbackErrorMessage);
       if (throwIfError) throw error;
-      return returnNullIfError ? null : (error as unknown);
+      return returnNullIfError ? null : (undefined as unknown as T);
     } finally {
       finallyDoThis?.();
     }
   }
 
-  get<T>(options: BaseOptions) {
+  get = <T>(options: BaseOptions) => {
     return this.request<T>("GET", options.endpointPath, undefined, options);
-  }
+  };
 
-  post<T>(options: WithData) {
+  post = <T>(options: WithData) => {
     return this.request<T>("POST", options.endpointPath, options.data, options);
-  }
+  };
 
-  patch<T>(options: WithData) {
+  patch = <T>(options: WithData) => {
     return this.request<T>(
       "PATCH",
       options.endpointPath,
       options.data,
       options
     );
-  }
+  };
 }
 
 const fetcher = new Fetcher();

@@ -239,7 +239,10 @@ const createTopbarPanel = () => {
           });
         },
       },
-      { type: "custom", component: ({ editor }) => <PageTitle editor={editor} /> },
+      {
+        type: "custom",
+        component: ({ editor }) => <PageTitle editor={editor} />,
+      },
       {
         type: "row",
         className:
@@ -280,6 +283,23 @@ const createTopbarPanel = () => {
                 setState({
                   className:
                     editor.Devices.getSelected()?.id === "desktop"
+                      ? "gs-top-active"
+                      : "",
+                });
+              },
+            },
+          },
+          {
+            type: "button",
+            tooltip: "Laptop",
+            icon: customIcons.desktop,
+            className: "gs-top-active flex items-center justify-center h-full",
+            onClick: ({ editor }) => editor.Devices.select("laptop"),
+            editorEvents: {
+              "device:select": ({ editor, setState }) => {
+                setState({
+                  className:
+                    editor.Devices.getSelected()?.id === "laptop"
                       ? "gs-top-active"
                       : "",
                 });
@@ -537,6 +557,9 @@ export const pluginsConfig: CreateEditorOptions["plugins"] = [
   dialogComponent.init({
     block: { category: "Basic", label: "Dialog" },
   }),
+  iconifyComponent.init({
+    block: { category: "Extra", label: "Iconify" },
+  }),
   googleFontsAssetProvider.init({
     apiKey: process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY,
   }),
@@ -553,7 +576,13 @@ export const deviceConfig: CreateEditorOptions["devices"] = {
     {
       id: "desktop",
       name: "Desktop",
-      width: "800px",
+      width: "1400px",
+      widthMedia: "",
+    },
+    {
+      id: "laptop",
+      name: "Laptop",
+      width: "900px",
       widthMedia: "",
     },
     {
