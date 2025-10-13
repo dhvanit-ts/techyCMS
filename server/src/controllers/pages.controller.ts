@@ -32,14 +32,14 @@ export const publishPage = async (req: Request, res: Response) => {};
 export const updatePage = async (req: Request, res: Response) => {
   try {
     const page = await prisma.page.findUnique({
-      where: { slug: req.params.id },
+      where: { id: req.params.id },
     });
     if (page) {
       const updatedPage = await prisma.page.update({
-        where: { slug: req.params.id },
+        where: { id: req.params.id },
         data: req.body,
       });
-      return res.status(200).json({ data: updatedPage });
+      return res.status(201).json({ data: updatedPage });
     } else {
       return res.status(404).json({ error: "Page not found" });
     }

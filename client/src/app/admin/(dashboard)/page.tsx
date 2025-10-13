@@ -12,6 +12,7 @@ import { IoMdSettings } from "react-icons/io";
 import { useCallback, useEffect, useState } from "react";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { cn } from "@/lib/utils";
+import PageSettings from "@/components/PageSettings";
 
 export default function Home() {
   const [pages, setPages] = useState<IPage[]>([]);
@@ -68,7 +69,7 @@ export default function Home() {
 
         {loading ? (
           <div className="flex justify-center items-center h-96">
-            <Spinner />
+            <Spinner className="size-6" />
           </div>
         ) : pages.length === 0 ? (
           <div className="text-zinc-700">No pages available.</div>
@@ -103,8 +104,8 @@ export default function Home() {
                         className={cn(
                           "text-sm px-1.5 py-[0.5px] rounded-md",
                           page.status === "published"
-                            ? "text-green-200 bg-green-600"
-                            : "text-red-200 bg-red-600"
+                            ? "text-green-200 font-semibold bg-green-600"
+                            : "text-red-200 font-semibold bg-yellow-600"
                         )}
                       >
                         {page.status}
@@ -133,19 +134,18 @@ export default function Home() {
                         delayDuration={500}
                         tooltip="Page settings"
                       >
-                        <Button
-                          variant="ghost"
-                          className="hover:bg-zinc-200"
-                          size="icon-sm"
-                          asChild
-                        >
-                          <Link href={`/admin/pages/edit/${page.slug}`}>
-                            <IoMdSettings />
-                          </Link>
-                        </Button>
+                        <PageSettings page={page} setPages={setPages}>
+                          <Button
+                            variant="ghost"
+                            className="hover:bg-zinc-200 cursor-pointer group"
+                            size="icon-sm"
+                          >
+                            <IoMdSettings className="group-hover:rotate-90 duration-700" />
+                          </Button>
+                        </PageSettings>
                       </TooltipWrapper>
                       <TooltipWrapper delayDuration={500} tooltip="Delete Page">
-                        <Button variant="destructive" size="icon-sm" asChild>
+                        <Button variant="destructive" size="icon-sm" className="group" asChild>
                           <Link href={`/admin/pages/${page.slug}`}>
                             <MdDelete />
                           </Link>

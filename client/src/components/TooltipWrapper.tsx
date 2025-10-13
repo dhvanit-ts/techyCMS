@@ -16,7 +16,7 @@ function TooltipWrapper({
 } & React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return (
     <Tooltip {...props}>
-      <TooltipTrigger>{children}</TooltipTrigger>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>
         <p>{tooltip}</p>
       </TooltipContent>
