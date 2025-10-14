@@ -96,8 +96,8 @@ function ComponentSettings({
       ? { ...values }
       : {
           ...values,
-          html: "<h1>Hello world 👋</h1>",
-          css: "*{margin:0;padding:0;}",
+          html: values.html || "<h1>Hello world 👋</h1>",
+          css: values.css || "*{margin:0;padding:0;}",
         };
 
     fetcherFn({
@@ -139,9 +139,9 @@ function ComponentSettings({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{component ? component.name : "New Page"}</SheetTitle>
+          <SheetTitle>{component ? component.name : "New Component"}</SheetTitle>
           <SheetDescription>
-            {component ? component.category : "Create a new page"}
+            {component ? component.category : "Create a new component"}
           </SheetDescription>
         </SheetHeader>
 

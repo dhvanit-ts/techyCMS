@@ -29,8 +29,8 @@ function CodeEditor({
         onValueChange={setCode}
         highlight={(code) => highlight(code || "", prismLanguage, language)}
         padding={10}
-        preClassName="min-h-56"
-        textareaClassName="min-h-56"
+        preClassName="min-h-56 max-h-[500px] overflow-y-auto"
+        textareaClassName="min-h-56 max-h-[500px] overflow-y-auto"
         placeholder="Inject your code here"
         style={{
           fontFamily: '"Fira code", "Fira Mono", monospace',
