@@ -103,6 +103,10 @@ class Fetcher {
     return this.request<T>("POST", options.endpointPath, options.data, options);
   };
 
+  delete = <T>(options: WithData) => {
+    return this.request<T>("DELETE", options.endpointPath, options.data, options);
+  };
+
   patch = <T>(options: WithData) => {
     return this.request<T>(
       "PATCH",

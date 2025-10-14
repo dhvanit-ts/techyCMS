@@ -16,6 +16,7 @@ const zodObject = {
 
   GMAIL_APP_PASSWORD: z.string(),
   GMAIL_USER: z.string(),
+  SMTP_API_KEY: z.string(),
 
   SERVER_BASE_URI: z.string().default("http://localhost:8000"),
   GOOGLE_OAUTH_CLIENT_ID: z.string().default("your_google_oauth_client_id"),

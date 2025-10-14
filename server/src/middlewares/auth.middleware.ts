@@ -28,30 +28,30 @@ const verifyAdminJWT = async (
       throw new ApiError(401, "Invalid Access Token");
     }
 
-    const user = await prisma.admin.findUnique({
+    const admin = await prisma.admin.findUnique({
       where: {
         id: decodedToken.id,
       },
     });
 
-    if (!user) {
+    if (!admin) {
       throw new ApiError(401, "Invalid Access Token");
     }
 
-    if (!user.refreshToken) {
+    if (!admin.refreshToken) {
       throw new ApiError(
         401,
         "Refresh token session is not valid",
       );
     }
 
-    const mappedUser = {
-      ...user,
+    const mappedAdmin = {
+      ...admin,
       password: null,
       refreshToken: null,
     };
 
-    req.admin = mappedUser;
+    req.admin = mappedAdmin;
     next();
   } catch (error) {
     handleError(error, res, "Invalid Access Token", "UNAUTHORIZED");

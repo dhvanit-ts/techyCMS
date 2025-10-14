@@ -14,7 +14,7 @@ export const getPages = async (req: Request, res: Response) => {
 export const getPage = async (req: Request, res: Response) => {
   try {
     const page = await prisma.page.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug: req.params.slug, status: "published" },
     });
     if (page) {
       return res.status(200).json({ data: page });
@@ -72,5 +72,26 @@ export const savePage = async (req: Request, res: Response) => {
       .json({ message: "Page created successfully", data: newPage });
   } catch (error) {
     return res.status(500).json({ error: "Failed to create page" });
+  }
+};
+
+export const deletePage = async (req: Request, res: Response) => {
+  try {
+    const page = await prisma.page.findUnique({
+      where: { slug: req.params.slug },
+    });
+    if (page) {
+      await prisma.page.delete({
+        where: { slug: req.params.slug },
+      });
+      return res.status(200).json({ message: "Page deleted successfully" });
+    } else {
+      return res.status(404).json({ error: "Page not found" });
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log(error);
+      return res.status(500).json({ error: "Failed to delete page" });
+    }
   }
 };

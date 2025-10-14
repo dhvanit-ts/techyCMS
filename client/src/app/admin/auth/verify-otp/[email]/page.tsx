@@ -21,6 +21,8 @@ function OtpVerificationPage() {
   const { email } = useParams();
   const router = useRouter();
 
+  const decodedEmail = decodeURIComponent(email as string);
+
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -30,10 +32,10 @@ function OtpVerificationPage() {
 
   const sendOtp = useCallback(async () => {
     try {
-      if (!email) return;
+      if (!decodedEmail) return;
       await fetcher.post({
         endpointPath: "/admin/otp/send",
-        data: { email },
+        data: { email: decodedEmail },
         statusShouldBe: 200,
         fallbackErrorMessage: "Error sending OTP",
         throwIfError: true,
@@ -43,7 +45,7 @@ function OtpVerificationPage() {
     } catch (error) {
       console.error("Error sending OTP:", error);
     }
-  }, [email]);
+  }, [decodedEmail]);
 
   const verifyOTP = async () => {
     try {
@@ -51,13 +53,13 @@ function OtpVerificationPage() {
 
       await fetcher.post({
         endpointPath: `/admin/otp/verify`,
-        data: { email, otp },
+        data: { email: decodedEmail, otp },
         fallbackErrorMessage: "Error verifying OTP",
         throwIfError: true,
       });
 
       toast.success("OTP verified");
-      router.push(`/auth/setup/${email}`);
+      router.push(`/admin/auth/setup/${email}`);
     } catch (error) {
       console.log(error);
     } finally {
@@ -86,8 +88,8 @@ function OtpVerificationPage() {
     <div className="p-4 border-zinc-800 border rounded-md text-zinc-100 space-y-4 w-96">
       <h3 className="text-3xl text-center py-2">Verify email</h3>
       <p className=" text-center text-zinc-300">
-        Enter the 6-digit code we emailed to <b>{email}</b>. If you did not
-        receive it, you can request a new one{" "}
+        Enter the 6-digit code we emailed to <b>{decodedEmail}</b>. If you did
+        not receive it, you can request a new one{" "}
         {timeLeft > 0 ? (
           <span>
             in <b>{timeLeft}</b> seconds
@@ -103,7 +105,7 @@ function OtpVerificationPage() {
         .
       </p>
       <div className="flex justify-center">
-      <InputOTPWrapper otp={otp} setOtp={setOtp} />
+        <InputOTPWrapper otp={otp} setOtp={setOtp} />
       </div>
       <button
         disabled={otp.length < 6 || loading}

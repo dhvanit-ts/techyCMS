@@ -24,13 +24,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
+} from "../ui/form";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import TooltipWrapper from "./TooltipWrapper";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import TooltipWrapper from "../TooltipWrapper";
 import { IoInformationCircleSharp } from "react-icons/io5";
 import {
   Select,
@@ -38,11 +38,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Spinner } from "./ui/spinner";
+} from "../ui/select";
+import { Spinner } from "../ui/spinner";
 import { IoMdCloudUpload } from "react-icons/io";
+import { v4 as uuidv4 } from "uuid";
 import fetcher from "@/utils/fetcher";
 import { toast } from "sonner";
+
+type UpdatedPage = IPage & {
+  title: string;
+  slug: string;
+  status: "draft" | "published";
+};
 
 const formSchema = z.object({
   title: z
@@ -59,7 +66,7 @@ function PageSettings({
   setPages,
 }: {
   children: React.ReactNode;
-  page: IPage;
+  page?: IPage;
   setPages: Dispatch<SetStateAction<IPage[]>>;
 }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +74,7 @@ function PageSettings({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...page },
+    defaultValues: { ...page, status: page?.status || "draft" },
   });
 
   const { setValue } = form;
@@ -75,16 +82,27 @@ function PageSettings({
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    fetcher.patch({
-      endpointPath: `/pages/${page.id}/update`,
-      data: values,
+    const fetcherFn = page ? fetcher.patch : fetcher.post;
+    const url = page ? `/pages/${page.id}/update` : `/pages`;
+    const data = page
+      ? { ...values }
+      : { ...values, html: "<h1>Hello world 👋</h1>", css: "*{margin:0;padding:0;}" };
+    fetcherFn({
+      endpointPath: url,
+      data,
       fallbackErrorMessage: "Error saving page",
       statusShouldBe: 201,
       onSuccess: () => {
         setOpen(false);
-        setPages((pages) =>
-          pages.map((p) => (p.id === page.id ? { ...p, ...values } : p))
-        );
+        setPages((prevPages: IPage[]) => {
+          if (page) {
+            return prevPages.map((p) =>
+              p.id === page.id ? ({ ...p, ...values } as UpdatedPage) : p
+            );
+          } else {
+            return [...prevPages, { ...values, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() } as UpdatedPage];
+          }
+        });
         toast.success("Page updated successfully");
       },
       finallyDoThis: () => {
@@ -115,8 +133,10 @@ function PageSettings({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{page.title}</SheetTitle>
-          <SheetDescription>{page.slug}</SheetDescription>
+          <SheetTitle>{page?.title || "New Page"}</SheetTitle>
+          <SheetDescription>
+            {page?.slug || "create a new page"}
+          </SheetDescription>
         </SheetHeader>
         <Form {...form}>
           <form
@@ -198,7 +218,11 @@ function PageSettings({
             />
             <Button type="submit">
               {isLoading && <Spinner />}
-              <span>Submit</span>
+              {page ? (
+                <span>{isLoading ? "Updating..." : "Update"}</span>
+              ) : (
+                <span>{isLoading ? "Creating..." : "Create"}</span>
+              )}
             </Button>
           </form>
         </Form>
@@ -206,36 +230,5 @@ function PageSettings({
     </Sheet>
   );
 }
-
-/* <FormField
-  control={form.control}
-  name="status"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Status</FormLabel>
-      <Select
-        onValueChange={field.onChange}
-        defaultValue={field.value}
-      >
-        <FormControl>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a verified email to display" />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          <SelectItem value="draft">
-            <FaNoteSticky className="fill-amber-500" />
-            <span>Draft</span>
-          </SelectItem>
-          <SelectItem value="published">
-          <IoMdCloudUpload className="fill-green-600" />
-            <span>Publish</span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      <FormMessage />
-    </FormItem>
-  )}
-/> */
 
 export default PageSettings;

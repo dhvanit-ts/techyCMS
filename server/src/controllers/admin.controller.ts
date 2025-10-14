@@ -410,8 +410,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     const incomingRefreshToken =
       req.cookies.__refreshToken || req.body.refreshToken;
 
-    if (!incomingRefreshToken)
-      throw new ApiError(401, "Unauthorized request");
+    if (!incomingRefreshToken) throw new ApiError(401, "Unauthorized request");
 
     const decodedToken = jwt.verify(
       incomingRefreshToken,
@@ -472,6 +471,12 @@ export const sendOtp = async (req: Request, res: Response) => {
         options: {
           from: `"TechyCMS" <no-reply@techycms.com>`,
         },
+      },
+      {
+        headers: {
+          "x-api-token": env.SMTP_API_KEY,
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -509,7 +514,7 @@ export const updateUser = async (req: Request, res: Response) => {
     const { accentColor, displayName } = req.body;
 
     const updatedUser = await prisma.admin.update({
-      data: {  },
+      data: {},
       where: { id: req.admin.id },
     });
 
@@ -577,10 +582,7 @@ export const searchUsers = async (req: Request, res: Response) => {
 
     const users = await prisma.admin.findMany({
       where: {
-        OR: [
-          { username: { contains: query } },
-          { email: { contains: query } },
-        ],
+        OR: [{ username: { contains: query } }, { email: { contains: query } }],
       },
       select: {
         id: true,

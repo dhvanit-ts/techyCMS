@@ -10,14 +10,16 @@ function UserSetupPage() {
   const { email } = useParams();
   const router = useRouter();
 
+  const decodedEmail = decodeURIComponent(email as string);
+
   useEffect(() => {
     (async () => {
       try {
-        if (!email) return;
+        if (!decodedEmail) return;
 
         await fetcher.post({
           endpointPath: `/admin/register`,
-          data: { email },
+          data: { email: decodedEmail },
           statusShouldBe: 201,
           fallbackErrorMessage: "Error creating the user",
           throwIfError: true,
@@ -29,7 +31,7 @@ function UserSetupPage() {
         toast.error("Something went wrong while creating the user");
       }
     })();
-  }, [email, router]);
+  }, [decodedEmail, router]);
 
   return (
     <div className="text-zinc-100 flex flex-col justify-center items-center space-y-4">
