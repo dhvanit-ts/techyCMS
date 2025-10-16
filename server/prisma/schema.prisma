@@ -34,28 +34,30 @@ model Component {
   @@index([category])
 }
 
-model LinkList {
-  id    String @id @default(uuid())
-  links Link[]
-}
-
 model Link {
-  id         String   @id @default(uuid())
-  label      String
-  href       String
-  linkList   LinkList @relation(fields: [linkListId], references: [id])
-  linkListId String
+  id        String  @id @default(uuid())
+  label     String
+  href      String?
+  target    String?
+  rel       String?
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id])
 
-  @@index([linkListId])
+  parentId String?
+  parent   Link?   @relation("SubLinks", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children Link[]  @relation("SubLinks")
+
+  @@index([parentId])
+  @@index([sectionId])
 }
 
 model Section {
   id         String      @id @default(uuid())
   type       SectionType
   mode       SectionMode @default(NORMAL)
-  links      Json? // structured links
-  customHtml String?     @db.Text // optional HTML fragment (even in NORMAL mode)
-  customCss  String?     @db.Text // optional CSS fragment (even in NORMAL mode)
+  links      Link[]
+  customHtml String?     @db.Text
+  customCss  String?     @db.Text
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }

@@ -11,12 +11,10 @@ import {
   PointerSensor,
   DragOverlay,
 } from "@dnd-kit/core";
-
-type Item = {
-  id: string;
-  label: string;
-  children?: Item[];
-};
+import { Link } from "@/types/ILink";
+import { MdDelete, MdEdit } from "react-icons/md";
+import { Button } from "../ui/button";
+import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
 
 type DropIndicator = {
   targetId: string;
@@ -25,9 +23,9 @@ type DropIndicator = {
 
 // --- Utility functions ---
 function removeItem(
-  items: Item[],
+  items: Link[],
   id: string
-): { removed: Item; newTree: Item[] } | null {
+): { removed: Link; newTree: Link[] } | null {
   for (let i = 0; i < items.length; i++) {
     if (items[i].id === id) {
       const removed = items[i];
@@ -48,19 +46,19 @@ function removeItem(
 }
 
 function insertItem(
-  items: Item[],
-  item: Item,
+  items: Link[],
+  Link: Link,
   targetId: string,
   position: "before" | "after" | "inside"
-): Item[] {
+): Link[] {
   for (let i = 0; i < items.length; i++) {
     if (items[i].id === targetId) {
       if (position === "before")
-        return [...items.slice(0, i), item, ...items.slice(i)];
+        return [...items.slice(0, i), Link, ...items.slice(i)];
       if (position === "after")
-        return [...items.slice(0, i + 1), item, ...items.slice(i + 1)];
+        return [...items.slice(0, i + 1), Link, ...items.slice(i + 1)];
       if (position === "inside") {
-        const children = [...(items[i].children ?? []), item];
+        const children = [...(items[i].children ?? []), Link];
         const newItems = [...items];
         newItems[i] = { ...items[i], children };
         return newItems;
@@ -69,7 +67,7 @@ function insertItem(
     if (items[i].children) {
       const childrenUpdated = insertItem(
         items[i].children!,
-        item,
+        Link,
         targetId,
         position
       );
@@ -83,49 +81,53 @@ function insertItem(
   return items;
 }
 
-function findItemById(items: Item[], id: string): Item | null {
-  for (const item of items) {
-    if (item.id === id) return item;
-    if (item.children) {
-      const found = findItemById(item.children, id);
+function findItemById(items: Link[], id: string): Link | null {
+  for (const Link of items) {
+    if (Link.id === id) return Link;
+    if (Link.children) {
+      const found = findItemById(Link.children, id);
       if (found) return found;
     }
   }
   return null;
 }
 
-function isDescendant(parent: Item, childId: string): boolean {
+function isDescendant(parent: Link, childId: string): boolean {
   if (parent.id === childId) return true;
   if (parent.children) {
-    return parent.children.some(child => isDescendant(child, childId));
+    return parent.children.some((child) => isDescendant(child, childId));
   }
   return false;
 }
 
-// --- Draggable Item ---
 type DraggableItemProps = {
-  item: Item;
+  Link: Link;
   dropIndicator: DropIndicator | null;
   activeId: string | null;
 };
 
 const DraggableItem: React.FC<DraggableItemProps> = ({
-  item,
+  Link,
   dropIndicator,
   activeId,
 }) => {
   const itemRef = useRef<HTMLDivElement | null>(null);
-  
-  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
-    id: item.id,
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({
+    id: Link.id,
   });
 
   const { setNodeRef: setDropRef } = useDroppable({
-    id: item.id,
+    id: Link.id,
     data: {
-      type: 'item',
-      item: item
-    }
+      type: "Link",
+      Link: Link,
+    },
   });
 
   const setNodeRef = (node: HTMLDivElement | null) => {
@@ -133,13 +135,16 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     setDragRef(node);
     setDropRef(node);
     if (node) {
-      node.setAttribute('data-item-id', item.id);
+      node.setAttribute("data-Link-id", Link.id);
     }
   };
 
-  const showBeforeLine = dropIndicator?.targetId === item.id && dropIndicator.position === "before";
-  const showAfterLine = dropIndicator?.targetId === item.id && dropIndicator.position === "after";
-  const showInsideHighlight = dropIndicator?.targetId === item.id && dropIndicator.position === "inside";
+  const showBeforeLine =
+    dropIndicator?.targetId === Link.id && dropIndicator.position === "before";
+  const showAfterLine =
+    dropIndicator?.targetId === Link.id && dropIndicator.position === "after";
+  const showInsideHighlight =
+    dropIndicator?.targetId === Link.id && dropIndicator.position === "inside";
 
   const style: React.CSSProperties = {
     padding: "12px 16px",
@@ -169,8 +174,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
       )}
       <div ref={setNodeRef}>
         <div style={style} {...attributes} {...listeners}>
-          <div style={{ fontWeight: 500, color: "#333" }}>{item.label}</div>
-          
+          <Tab Link={Link} />
           {showInsideHighlight && (
             <div
               style={{
@@ -184,13 +188,13 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             />
           )}
         </div>
-        
-        {item.children && item.children.length > 0 && (
+
+        {Link.children && Link.children.length > 0 && (
           <div style={{ paddingLeft: 24, marginTop: 8 }}>
-            {item.children.map((child) => (
+            {Link.children.map((child) => (
               <DraggableItem
                 key={child.id}
-                item={child}
+                Link={child}
                 dropIndicator={dropIndicator}
                 activeId={activeId}
               />
@@ -213,23 +217,67 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   );
 };
 
-// --- Main Component ---
+const Tab = ({ Link }: { Link: Link }) => {
+  return (
+    <div
+      style={{ fontWeight: 500, color: "#333" }}
+      className="flex justify-between relative group"
+    >
+      <div>
+        <h4>{Link.label}</h4>
+        <p className="text-zinc-600 text-xs">{Link.href}</p>
+      </div>
+      <div className="absolute -right-4 -top-3 opacity-0 group-hover:opacity-100 transition-all">
+        <ButtonGroup
+          orientation="vertical"
+          className="border border-zinc-300 rounded-md"
+        >
+          <Button
+            variant="secondary"
+            className="text-red-600 bg-gray-200 hover:text-zinc-100 hover:bg-red-600"
+            size="icon-sm"
+          >
+            <MdDelete />
+          </Button>
+          <ButtonGroupSeparator />
+          <Button variant="secondary" className="bg-gray-200" size="icon-sm">
+            <MdEdit />
+          </Button>
+        </ButtonGroup>
+      </div>
+    </div>
+  );
+};
+
 const NestedTabsDnD: React.FC = () => {
-  const [items, setItems] = useState<Item[]>([
-    { id: "1", label: "Tab 1", children: [
-      { id: "1-1", label: "Tab 1-1" },
-      { id: "1-2", label: "Tab 1-2" }
-    ]},
-    { id: "2", label: "Tab 2" },
-    { id: "3", label: "Tab 3", children: [
-      { id: "3-1", label: "Tab 3-1" },
-      { id: "3-2", label: "Tab 3-2" }
-    ]},
-    { id: "4", label: "Tab 4" },
+  const [items, setItems] = useState<Link[]>([
+    {
+      id: "1",
+      children: [],
+      label: "Home",
+      href: "/",
+      sectionId: "1",
+    },
+    {
+      id: "2",
+      children: [],
+      label: "About",
+      href: "/",
+      sectionId: "1",
+    },
+    {
+      id: "3",
+      children: [],
+      label: "Contact",
+      href: "/",
+      sectionId: "1",
+    },
   ]);
-  
+
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(
+    null
+  );
   const pointerPosRef = useRef({ x: 0, y: 0 });
 
   const sensors = useSensors(
@@ -244,9 +292,9 @@ const NestedTabsDnD: React.FC = () => {
     const handlePointerMove = (e: PointerEvent) => {
       pointerPosRef.current = { x: e.clientX, y: e.clientY };
     };
-    
-    window.addEventListener('pointermove', handlePointerMove);
-    return () => window.removeEventListener('pointermove', handlePointerMove);
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => window.removeEventListener("pointermove", handlePointerMove);
   }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -255,14 +303,16 @@ const NestedTabsDnD: React.FC = () => {
 
   const handleDragMove = (event: DragMoveEvent) => {
     const { over, active } = event;
-    
+
     if (!over || over.id === active.id) {
       setDropIndicator(null);
       return;
     }
 
-    // Get the element for the over target - use data-item-id
-    const overElement = document.querySelector(`[data-item-id="${over.id}"]`) as HTMLElement;
+    // Get the element for the over target - use data-Link-id
+    const overElement = document.querySelector(
+      `[data-Link-id="${over.id}"]`
+    ) as HTMLElement;
     if (!overElement) {
       setDropIndicator(null);
       return;
@@ -274,21 +324,21 @@ const NestedTabsDnD: React.FC = () => {
       setDropIndicator(null);
       return;
     }
-    
+
     const rect = contentElement.getBoundingClientRect();
     const mouseY = pointerPosRef.current.y;
-    
+
     // Check if mouse is within the content area bounds
     if (mouseY < rect.top || mouseY > rect.bottom) {
       setDropIndicator(null);
       return;
     }
-    
+
     const relativeY = mouseY - rect.top;
     const heightThird = rect.height / 3;
 
     let position: "before" | "after" | "inside";
-    
+
     if (relativeY < heightThird) {
       position = "before";
     } else if (relativeY > rect.height - heightThird) {
@@ -314,14 +364,14 @@ const NestedTabsDnD: React.FC = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     setActiveId(null);
     const currentDropIndicator = dropIndicator;
     setDropIndicator(null);
 
     if (!over || !currentDropIndicator || active.id === over.id) return;
 
-    // Don't allow dropping an item into itself or its descendants
+    // Don't allow dropping an Link into itself or its descendants
     const activeItem = findItemById(items, String(active.id));
     if (activeItem && currentDropIndicator.position === "inside") {
       if (isDescendant(activeItem, String(over.id))) {
@@ -338,7 +388,7 @@ const NestedTabsDnD: React.FC = () => {
       currentDropIndicator.targetId,
       currentDropIndicator.position
     );
-    
+
     setItems(updatedTree);
   };
 
@@ -349,20 +399,23 @@ const NestedTabsDnD: React.FC = () => {
 
   const activeItem = activeId ? findItemById(items, activeId) : null;
 
-  // Add data-id to each item for easier lookup
+  // Add data-id to each Link for easier lookup
   useEffect(() => {
     const addDataId = (element: HTMLElement) => {
-      const id = element.getAttribute('data-rbd-draggable-id') || 
-                 element.getAttribute('data-rbd-droppable-id');
+      const id =
+        element.getAttribute("data-rbd-draggable-id") ||
+        element.getAttribute("data-rbd-droppable-id");
       if (id) {
-        element.setAttribute('data-id', id);
+        element.setAttribute("data-id", id);
       }
     };
 
     const observer = new MutationObserver(() => {
-      document.querySelectorAll('[data-rbd-draggable-id], [data-rbd-droppable-id]').forEach(el => {
-        addDataId(el as HTMLElement);
-      });
+      document
+        .querySelectorAll("[data-rbd-draggable-id], [data-rbd-droppable-id]")
+        .forEach((el) => {
+          addDataId(el as HTMLElement);
+        });
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
@@ -377,18 +430,20 @@ const NestedTabsDnD: React.FC = () => {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div style={{ 
-        width: 400, 
-        padding: 24, 
-        background: "#fff",
-        borderRadius: 8,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-      }}>
+      <div
+        style={{
+          width: 400,
+          padding: 24,
+          background: "#fff",
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
         <h2 style={{ marginBottom: 20, color: "#333" }}>Nested Tabs</h2>
-        {items.map((item) => (
+        {items.map((Link) => (
           <DraggableItem
-            key={item.id}
-            item={item}
+            key={Link.id}
+            Link={Link}
             dropIndicator={dropIndicator}
             activeId={activeId}
           />
