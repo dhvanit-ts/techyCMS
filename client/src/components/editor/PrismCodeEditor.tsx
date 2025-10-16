@@ -5,7 +5,6 @@ import "prismjs/components/prism-markup";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-javascript";
 import "prismjs/themes/prism.css";
-import { cn } from "@/lib/utils";
 
 function CodeEditor({
   code,
@@ -13,7 +12,7 @@ function CodeEditor({
   language = "html",
 }: {
   code: string;
-  setCode: (code: string) => void;
+  setCode?: (code: string) => void;
   language?: "html" | "css" | "javascript";
 }) {
   const prismLanguage =
@@ -22,21 +21,22 @@ function CodeEditor({
       : language === "css"
       ? languages.css
       : languages.js;
+
   return (
-    <div>
+    <div className="border border-zinc-200 rounded-lg shadow-md max-h-[500px] overflow-auto">
       <Editor
         value={code}
-        onValueChange={setCode}
+        onValueChange={setCode || (() => {})}
         highlight={(code) => highlight(code || "", prismLanguage, language)}
         padding={10}
-        preClassName="min-h-56 max-h-[500px] overflow-y-auto"
-        textareaClassName="min-h-56 max-h-[500px] overflow-y-auto"
-        placeholder="Inject your code here"
         style={{
-          fontFamily: '"Fira code", "Fira Mono", monospace',
+          fontFamily: '"Fira Code", "Fira Mono", monospace',
           fontSize: 12,
+          minHeight: 200,
         }}
-        className={cn("shadow-md rounded-lg border border-zinc-200 min-h-56")}
+        textareaClassName="w-full outline-none"
+        preClassName="w-full m-0"
+        placeholder="Inject your code here"
       />
     </div>
   );

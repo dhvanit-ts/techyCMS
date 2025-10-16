@@ -7,13 +7,41 @@ import { useEditorStorage } from "@/hooks/useEditorStorage";
 import { editorOptions } from "@/components/editor/EditorConfig";
 import "@grapesjs/studio-sdk/style";
 import { fetchProject, saveProject } from "@/utils/projectApis";
+import fetcher from "@/utils/fetcher";
+import { IComponent } from "@/types/IComponent";
 
 const STORAGE_KEY = "DEMO_PROJECT_ID";
 
 export default function EditorApp() {
   const pathname = usePathname();
-  const slug = (useParams().slug as string) || null;
+  const params = useParams();
+  const slug = (params?.slug as string) ?? null;
   const { load, save } = useEditorStorage(STORAGE_KEY);
+
+  const fetchComponents = async () => {
+    try {
+      const data = await fetcher.get<{ data: IComponent[] }>({
+        endpointPath: "/components",
+        fallbackErrorMessage: "Error fetching components",
+      });
+
+      return (data.data ?? []).map((component) => ({
+        label: component.name,
+        category: component.category,
+        content: {
+          type: "default",
+          tagName: "div",
+          attributes: { class: "gjs-component" },
+          content: `<div>
+        <style>${component.css}</style>
+        <div>${component.html}</div>
+        </div>`,
+        },
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const onReady = async (editor: Editor) => {
     (window as unknown as { editor?: Editor }).editor = editor;
@@ -23,25 +51,10 @@ export default function EditorApp() {
     if (css) editor.setStyle(css);
     await save(editor);
 
-    // grapes-blocks.js (client-side in editor)
-    editor.BlockManager.add("testimonial-block", {
-      label: "Testimonial",
-      category: "Basic",
-      content: {
-        type: "default",
-        tagName: "div",
-        attributes: { class: "gjs-component" },
-        // This is the actual HTML that will be saved
-        content: `<div class="gjs-component" data-component="Testimonial" data-props='${JSON.stringify(
-          {
-            author: "Ana",
-            text: "Nice work!",
-          }
-        ).replace(/'/g, "&apos;")}'>
-      <blockquote>Ana: Nice work!</blockquote>
-    </div>`,
-      },
-    });
+    const components = await fetchComponents();
+    components?.map((component) =>
+      editor.BlockManager.add(component.label, component)
+    );
   };
 
   const onSave = async ({ editor }: { editor: Editor }) => {

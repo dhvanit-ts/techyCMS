@@ -34,7 +34,41 @@ model Component {
   @@index([category])
 }
 
-// more schemas can be added here
+model LinkList {
+  id    String @id @default(uuid())
+  links Link[]
+}
+
+model Link {
+  id         String   @id @default(uuid())
+  label      String
+  href       String
+  linkList   LinkList @relation(fields: [linkListId], references: [id])
+  linkListId String
+
+  @@index([linkListId])
+}
+
+model Section {
+  id         String      @id @default(uuid())
+  type       SectionType
+  mode       SectionMode @default(NORMAL)
+  links      Json? // structured links
+  customHtml String?     @db.Text // optional HTML fragment (even in NORMAL mode)
+  customCss  String?     @db.Text // optional CSS fragment (even in NORMAL mode)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+enum SectionType {
+  HEADER
+  FOOTER
+}
+
+enum SectionMode {
+  NORMAL
+  CUSTOM
+}
 
 model Page {
   id       String @id @default(uuid())

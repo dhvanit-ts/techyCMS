@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@grapesjs/studio-sdk": "^1.0.56",
     "@grapesjs/studio-sdk-plugins": "^1.0.29",
     "@hookform/resolvers": "^5.2.2",

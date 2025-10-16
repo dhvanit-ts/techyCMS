@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { IoMdEye } from "react-icons/io";
 import { IComponent } from "@/types/IComponent";
+import CodeEditor from "./PrismCodeEditor";
 
 export function ComponentPreviewSheet({ component }: { component: IComponent }) {
   // iframe src once
@@ -90,16 +91,8 @@ export function ComponentPreviewSheet({ component }: { component: IComponent }) 
 
             <ResizablePanel defaultSize={30} minSize={10} className="p-4">
               <div className="h-full overflow-auto">
-                <h3 className="mb-2 font-semibold">Inspector / Notes</h3>
-                <p className="text-sm text-zinc-600">
-                  Breakpoint hints, props, or anything you want.
-                </p>
-
-                <div className="mt-4 space-y-2 text-sm">
-                  <div>• Small: {"<"}640px</div>
-                  <div>• Medium: 640px — 1024px</div>
-                  <div>• Large: {">"}1024px</div>
-                </div>
+                <CodeEditor code={component.html} language="html" />
+                <CodeEditor code={component.css} language="css" />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
