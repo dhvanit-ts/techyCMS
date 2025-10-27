@@ -110,7 +110,7 @@ const HeaderComponent = () => {
   };
 
   return (
-    <div>
+    <div className="pt-4">
       <Field
         orientation="horizontal"
         className="w-fit bg-zinc-100 px-2 py-1 rounded-full"

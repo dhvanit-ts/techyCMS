@@ -11,21 +11,35 @@ import {
   PointerSensor,
   DragOverlay,
 } from "@dnd-kit/core";
-import { Link } from "@/types/ILink";
+import { ILink } from "@/types/ILink";
 import { MdDelete, MdEdit } from "react-icons/md";
 import { Button } from "../ui/button";
 import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
+import LinkForm from "../forms/LinkForm";
+import useLinkStore from "@/store/linkStore";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import fetcher from "@/utils/fetcher";
+import { toast } from "sonner";
 
 type DropIndicator = {
   targetId: string;
   position: "before" | "after" | "inside";
 };
 
-// --- Utility functions ---
 function removeItem(
-  items: Link[],
+  items: ILink[],
   id: string
-): { removed: Link; newTree: Link[] } | null {
+): { removed: ILink; newTree: ILink[] } | null {
   for (let i = 0; i < items.length; i++) {
     if (items[i].id === id) {
       const removed = items[i];
@@ -46,11 +60,11 @@ function removeItem(
 }
 
 function insertItem(
-  items: Link[],
-  Link: Link,
+  items: ILink[],
+  Link: ILink,
   targetId: string,
   position: "before" | "after" | "inside"
-): Link[] {
+): ILink[] {
   for (let i = 0; i < items.length; i++) {
     if (items[i].id === targetId) {
       if (position === "before")
@@ -81,7 +95,7 @@ function insertItem(
   return items;
 }
 
-function findItemById(items: Link[], id: string): Link | null {
+function findItemById(items: ILink[], id: string): ILink | null {
   for (const Link of items) {
     if (Link.id === id) return Link;
     if (Link.children) {
@@ -92,7 +106,7 @@ function findItemById(items: Link[], id: string): Link | null {
   return null;
 }
 
-function isDescendant(parent: Link, childId: string): boolean {
+function isDescendant(parent: ILink, childId: string): boolean {
   if (parent.id === childId) return true;
   if (parent.children) {
     return parent.children.some((child) => isDescendant(child, childId));
@@ -101,7 +115,7 @@ function isDescendant(parent: Link, childId: string): boolean {
 }
 
 type DraggableItemProps = {
-  Link: Link;
+  Link: ILink;
   dropIndicator: DropIndicator | null;
   activeId: string | null;
 };
@@ -217,7 +231,20 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   );
 };
 
-const Tab = ({ Link }: { Link: Link }) => {
+const Tab = ({ Link }: { Link: ILink }) => {
+  const handleDelete = async () => {
+    const toastId = toast.loading("Deleting link...");
+    await fetcher.delete({
+      endpointPath: `/components/${Link.id}`,
+      data: { id: Link.id },
+      onSuccess: () => {
+        toast.success("Link deleted successfully");
+      },
+      onError: () => toast.error("Error deleting link"),
+      finallyDoThis: () => toast.dismiss(toastId),
+    });
+  };
+
   return (
     <div
       style={{ fontWeight: 500, color: "#333" }}
@@ -232,17 +259,38 @@ const Tab = ({ Link }: { Link: Link }) => {
           orientation="vertical"
           className="border border-zinc-300 rounded-md"
         >
-          <Button
-            variant="secondary"
-            className="text-red-600 bg-gray-200 hover:text-zinc-100 hover:bg-red-600"
-            size="icon-sm"
-          >
-            <MdDelete />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="secondary"
+                className="text-red-600 bg-gray-200 hover:text-zinc-100 hover:bg-red-600"
+                size="icon-sm"
+              >
+                <MdDelete />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your account and remove your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <ButtonGroupSeparator />
-          <Button variant="secondary" className="bg-gray-200" size="icon-sm">
-            <MdEdit />
-          </Button>
+          <LinkForm link={Link} setLinks={() => {}}>
+            <Button variant="secondary" className="bg-gray-200" size="icon-sm">
+              <MdEdit />
+            </Button>
+          </LinkForm>
         </ButtonGroup>
       </div>
     </div>
@@ -250,34 +298,14 @@ const Tab = ({ Link }: { Link: Link }) => {
 };
 
 const NestedTabsDnD: React.FC = () => {
-  const [items, setItems] = useState<Link[]>([
-    {
-      id: "1",
-      children: [],
-      label: "Home",
-      href: "/",
-      sectionId: "1",
-    },
-    {
-      id: "2",
-      children: [],
-      label: "About",
-      href: "/",
-      sectionId: "1",
-    },
-    {
-      id: "3",
-      children: [],
-      label: "Contact",
-      href: "/",
-      sectionId: "1",
-    },
-  ]);
-
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(
     null
   );
+
+  const items = useLinkStore((s) => s.links);
+  const setItems = useLinkStore((s) => s.setLinks);
+
   const pointerPosRef = useRef({ x: 0, y: 0 });
 
   const sensors = useSensors(

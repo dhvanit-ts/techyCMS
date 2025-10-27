@@ -36,7 +36,7 @@ function ProfileCard() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="cursor-pointer">
-          <AvatarImage src="https://github.com/Dhvanitmonpara.png" />
+          <AvatarImage src="https://github.com/dhvanitmonpara.png" />
           <AvatarFallback>
             <span className="sr-only">
               {admin?.username.slice(0, 1).toUpperCase()}

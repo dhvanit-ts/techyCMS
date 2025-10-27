@@ -1,4 +1,4 @@
-export interface Link {
+export interface ILink {
   id: string;
   label: string;
   href?: string;
@@ -6,14 +6,16 @@ export interface Link {
   rel?: string;
   sectionId: string;
   parentId?: string;
-  children?: Link[];
+  children?: ILink[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface Section {
+export interface ISection {
   id: string;
   type: SectionType;
   mode: SectionMode;
-  links: Link[];
+  links: ILink[];
   customHtml?: string;
   customCss?: string;
   createdAt: Date;
