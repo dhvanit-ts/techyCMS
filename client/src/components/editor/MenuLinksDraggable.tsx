@@ -286,7 +286,7 @@ const Tab = ({ Link }: { Link: ILink }) => {
             </AlertDialogContent>
           </AlertDialog>
           <ButtonGroupSeparator />
-          <LinkForm link={Link} setLinks={() => {}}>
+          <LinkForm link={Link} setLinks={useLinkStore((s) => s.setLinks)}>
             <Button variant="secondary" className="bg-gray-200" size="icon-sm">
               <MdEdit />
             </Button>
@@ -297,14 +297,34 @@ const Tab = ({ Link }: { Link: ILink }) => {
   );
 };
 
-const NestedTabsDnD: React.FC = () => {
+function assignOrderRecursive(
+  links: ILink[],
+  parentId: string | null = null
+): ILink[] {
+  return links.map((link, index) => {
+    const updated = {
+      ...link,
+      parentId,
+      order: index,
+      children: assignOrderRecursive(link.children || [], link.id),
+    };
+    return updated;
+  });
+}
+
+const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
+  const items = useLinkStore((s) => s.links);
+  const setItems = useLinkStore((s) => s.setLinks);
+
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [links, setLinks] = useState<ILink[]>(items);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(
     null
   );
 
-  const items = useLinkStore((s) => s.links);
-  const setItems = useLinkStore((s) => s.setLinks);
+  useEffect(() => {
+    setLinks(items);
+  }, [items]);
 
   const pointerPosRef = useRef({ x: 0, y: 0 });
 
@@ -377,7 +397,7 @@ const NestedTabsDnD: React.FC = () => {
 
     // Check if trying to drop into self or descendant
     if (position === "inside") {
-      const activeItem = findItemById(items, String(active.id));
+      const activeItem = findItemById(links, String(active.id));
       if (activeItem && isDescendant(activeItem, String(over.id))) {
         setDropIndicator(null);
         return;
@@ -400,14 +420,14 @@ const NestedTabsDnD: React.FC = () => {
     if (!over || !currentDropIndicator || active.id === over.id) return;
 
     // Don't allow dropping an Link into itself or its descendants
-    const activeItem = findItemById(items, String(active.id));
+    const activeItem = findItemById(links, String(active.id));
     if (activeItem && currentDropIndicator.position === "inside") {
       if (isDescendant(activeItem, String(over.id))) {
         return;
       }
     }
 
-    const removedRes = removeItem(items, String(active.id));
+    const removedRes = removeItem(links, String(active.id));
     if (!removedRes) return;
 
     const updatedTree = insertItem(
@@ -417,7 +437,7 @@ const NestedTabsDnD: React.FC = () => {
       currentDropIndicator.position
     );
 
-    setItems(updatedTree);
+    setLinks(updatedTree);
   };
 
   const handleDragCancel = () => {
@@ -425,7 +445,7 @@ const NestedTabsDnD: React.FC = () => {
     setDropIndicator(null);
   };
 
-  const activeItem = activeId ? findItemById(items, activeId) : null;
+  const activeItem = activeId ? findItemById(links, activeId) : null;
 
   // Add data-id to each Link for easier lookup
   useEffect(() => {
@@ -450,51 +470,99 @@ const NestedTabsDnD: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <div
-        style={{
-          width: 400,
-          padding: 24,
-          background: "#fff",
-          borderRadius: 8,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2 style={{ marginBottom: 20, color: "#333" }}>Nested Tabs</h2>
-        {items.map((Link) => (
-          <DraggableItem
-            key={Link.id}
-            Link={Link}
-            dropIndicator={dropIndicator}
-            activeId={activeId}
-          />
-        ))}
-      </div>
+  const handleUpdateLinksOrder = () => {
+    const toastId = toast.loading("Updating links order...");
+    try {
+      const orderedLinks = assignOrderRecursive(links);
 
-      <DragOverlay>
-        {activeItem ? (
-          <div
-            style={{
-              padding: "12px 16px",
-              background: "#fff",
-              border: "2px solid #2196f3",
-              borderRadius: 6,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-              fontWeight: 500,
-            }}
-          >
-            {activeItem.label}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+      fetcher.patch({
+        endpointPath: `/links/reorder/${sectionId}`,
+        data: { links: orderedLinks },
+        fallbackErrorMessage: "Error updating links",
+        statusShouldBe: 200,
+      });
+
+      setItems(orderedLinks);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      toast.dismiss(toastId);
+      toast.success("Links updated successfully");
+    }
+  };
+
+  const areListsDifferent = (a: ILink[] = [], b: ILink[] = []) => {
+    if (a.length !== b.length) return true;
+
+    for (let i = 0; i < a.length; i++) {
+      if (a[i].id !== b[i].id) return true;
+
+      const aChildren = a[i].children || [];
+      const bChildren = b[i].children || [];
+
+      if (areListsDifferent(aChildren, bChildren)) return true;
+    }
+
+    return false;
+  };
+
+  const hasChanged = areListsDifferent(links, items);
+
+  return (
+    <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div
+          style={{
+            width: 400,
+            padding: 24,
+            background: "#fff",
+            borderRadius: 8,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <h2 style={{ marginBottom: 20, color: "#333" }}>Nested Tabs</h2>
+          {links.map((Link) => (
+            <DraggableItem
+              key={Link.id}
+              Link={Link}
+              dropIndicator={dropIndicator}
+              activeId={activeId}
+            />
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeItem ? (
+            <div
+              style={{
+                padding: "12px 16px",
+                background: "#fff",
+                border: "2px solid #2196f3",
+                borderRadius: 6,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                fontWeight: 500,
+              }}
+            >
+              {activeItem.label}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+      {hasChanged && (
+        <div className="flex gap-2 mt-4">
+          <Button onClick={handleUpdateLinksOrder}>Save changes</Button>
+          <Button variant="outline" onClick={() => setLinks(items)}>
+            Discard changes
+          </Button>
+        </div>
+      )}
+    </>
   );
 };
 

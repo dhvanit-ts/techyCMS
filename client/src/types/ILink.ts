@@ -5,7 +5,8 @@ export interface ILink {
   target?: string;
   rel?: string;
   sectionId: string;
-  parentId?: string;
+  parentId?: string | null;
+  order?: number;
   children?: ILink[];
   createdAt?: Date;
   updatedAt?: Date;

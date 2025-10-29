@@ -10,29 +10,7 @@ interface LinkState {
 }
 
 const useLinkStore = create<LinkState>((set) => ({
-  links: [
-    {
-      id: "1",
-      children: [],
-      label: "Home",
-      href: "/",
-      sectionId: "1",
-    },
-    {
-      id: "2",
-      children: [],
-      label: "About",
-      href: "/",
-      sectionId: "1",
-    },
-    {
-      id: "3",
-      children: [],
-      label: "Contact",
-      href: "/",
-      sectionId: "1",
-    },
-  ],
+  links: [],
   setLinks: (links) => set({ links }),
   updateLink: (linkId, updatedLink) =>
     set((state) => ({

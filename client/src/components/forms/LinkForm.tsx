@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -52,7 +52,7 @@ const formSchema = formSchemaWithoutChild.extend({
 interface ComponentSettingsProps {
   children: React.ReactNode;
   link?: ILink;
-  setLinks: Dispatch<SetStateAction<ILink[]>>;
+  setLinks: (links: ILink[]) => void;
 }
 
 function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
@@ -80,7 +80,7 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
     setIsLoading(true);
 
     const fetcherFn = link ? fetcher.patch : fetcher.post;
-    const url = link ? `/components/${link.id}/update` : `/components`;
+    const url = link ? `/links/${link.id}/update` : `/links`;
 
     const data = { ...values };
 
@@ -115,11 +115,10 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
           updatedAt: new Date(),
         };
 
-        setLinks((prev) =>
-          link
-            ? prev.map((p) => (p.id === link.id ? newLink : p))
-            : [...prev, newLink]
-        );
+        const updatedLinks = link
+          ? links.map((p) => (p.id === link.id ? newLink : p))
+          : [...links, newLink];
+        setLinks(updatedLinks);
 
         toast.success(`Component ${link ? "updated" : "created"} successfully`);
       },
@@ -140,7 +139,9 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, (errors) =>
+              console.log(errors)
+            )}
             className="space-y-6 p-4"
           >
             {/* Label */}
@@ -223,7 +224,7 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
                 <FormItem>
                   <FormLabel>Parent ID (optional)</FormLabel>
                   <FormControl>
-                    <Select {...field}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select parent" />
                       </SelectTrigger>
@@ -241,6 +242,44 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
               )}
             />
 
+            {/* sectionId */}
+            <FormField
+              control={form.control}
+              name="sectionId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Section</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sections.map((section) => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.formState.errors.parentId && (
+              <p className="text-red-500">
+                {form.formState.errors.parentId.message}
+              </p>
+            )}
+
+            {form.formState.errors.href && (
+              <p className="text-red-500">
+                {form.formState.errors.href.message}
+              </p>
+            )}
+
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Spinner />}
               {link
@@ -257,5 +296,16 @@ function LinkForm({ children, link, setLinks }: ComponentSettingsProps) {
     </Sheet>
   );
 }
+
+const sections = [
+  {
+    id: "dad30d28-a2b0-4052-a59b-45c56592f27b",
+    label: "Header",
+  },
+  {
+    id: "5edb327f-a0bc-4764-9362-5a414e91a4b6",
+    label: "Footer",
+  }
+]
 
 export default LinkForm;

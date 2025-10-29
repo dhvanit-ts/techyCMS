@@ -9,6 +9,8 @@ import healthRouter from "./routes/health.route";
 import adminRouter from "./routes/admin.route";
 import pagesRouter from "./routes/pages.route";
 import componentsRouter from "./routes/components.route";
+import linkRouter from "./routes/link.route";
+import sectionRouter from "./routes/section.route";
 
 const app = express();
 const server = http.createServer(app);
@@ -43,5 +45,7 @@ app.use("/api/v1/health", healthRouter)
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/pages", pagesRouter)
 app.use("/api/v1/components", componentsRouter)
+app.use("/api/v1/links", linkRouter)
+app.use("/api/v1/sections", sectionRouter)
 
 export default server;

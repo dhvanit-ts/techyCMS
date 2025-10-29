@@ -1,0 +1,21 @@
+{
+  "name": "myapp",
+  "expressVersion": "latest",
+  "db": {
+    "enable": true,
+    "provider": "mysql",
+    "connectionString": "mysql://root:password@localhost:3306/myapp",
+    "orm": "sequelize",
+    "name": "my_database"
+  },
+  "cache": {
+    "enable": true,
+    "service": "nodecache"
+  },
+  "auth": {
+    "enable": true
+  },
+  "git": false,
+  "socket": true,
+  "language": "ts"
+}

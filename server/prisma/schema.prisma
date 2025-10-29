@@ -43,12 +43,15 @@ model Link {
   sectionId String
   section   Section @relation(fields: [sectionId], references: [id])
 
+  order Int @default(0)
+
   parentId String?
   parent   Link?   @relation("SubLinks", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children Link[]  @relation("SubLinks")
 
   @@index([parentId])
   @@index([sectionId])
+  @@index([order])
 }
 
 model Section {

@@ -11,6 +11,12 @@ import fetcher from "@/utils/fetcher";
 import { AxiosError } from "axios";
 import { v4 as uuid } from "uuid";
 import React, { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import LinkForm from "@/components/forms/LinkForm";
+import useLinkStore from "@/store/linkStore";
+import { cn } from "@/lib/utils";
+import { ILink } from "@/types/ILink";
+import { Spinner } from "@/components/ui/spinner";
 
 function ComponentsPage() {
   const [components, setComponents] = useState<IComponent[]>([]);
@@ -71,7 +77,6 @@ function ComponentsPage() {
 interface TSection {
   id: string;
   isCustom: boolean;
-  
 }
 
 const HeaderComponent = () => {
@@ -81,22 +86,30 @@ const HeaderComponent = () => {
     isCustom: false,
   });
   const { handleAuthError } = useHandleAuthError();
+  const setLinks = useLinkStore((s) => s.setLinks);
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetcher.get<{ data: IComponent[] }>({
-          endpointPath: "/components",
+        setLoading(true);
+        const data = await fetcher.get<{ data: ILink[] }>({
+          endpointPath: `/links/many/section/dad30d28-a2b0-4052-a59b-45c56592f27b`,
           fallbackErrorMessage: "Error fetching components",
         });
+
+        setLinks(data?.data ?? []);
       } catch (error) {
-        console.log(error);
+        handleAuthError(error as AxiosError);
+      } finally {
+        setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateMenu = async (components: IComponent[]) => {
     try {
+      setLoading(true);
       await fetcher.patch({
         endpointPath: "/components",
         data: { components },
@@ -106,32 +119,39 @@ const HeaderComponent = () => {
     } catch (error) {
       console.log(error);
       handleAuthError(error as AxiosError);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="pt-4">
-      <Field
-        orientation="horizontal"
-        className="w-fit bg-zinc-100 px-2 py-1 rounded-full"
-      >
-        <FieldContent>
-          <FieldLabel htmlFor="is-customizable">Custom</FieldLabel>
-        </FieldContent>
-        <Switch
-          id="is-customizable"
-          onCheckedChange={c => setSection({ ...section, isCustom: c })}
-          checked={section.isCustom}
-        />
-      </Field>
+    <div className={cn("pt-4 space-y-2", !section.isCustom && "w-fit")}>
+      <div className="flex justify-between items-center">
+        <Field
+          orientation="horizontal"
+          className="w-fit bg-zinc-100 px-2 py-1 rounded-full"
+        >
+          <FieldContent>
+            <FieldLabel htmlFor="is-customizable">Custom</FieldLabel>
+          </FieldContent>
+          <Switch
+            id="is-customizable"
+            onCheckedChange={(c) => setSection({ ...section, isCustom: c })}
+            checked={section.isCustom}
+          />
+        </Field>
+        <LinkForm setLinks={setLinks}>
+          <Button variant="outline">Add</Button>
+        </LinkForm>
+      </div>
       <div>
         {section.isCustom ? (
           <div>
-            <CodeEditor code="" />
+            <CodeEditor code="" className="bg-zinc-100" />
           </div>
         ) : (
           <div>
-            <SortableCards />
+            {loading ? <div className="bg-zinc-100 w-[25rem] h-30 rounded-md shadow-md flex justify-center items-center"><Spinner/></div> : <SortableCards sectionId={section.id} />}
           </div>
         )}
       </div>

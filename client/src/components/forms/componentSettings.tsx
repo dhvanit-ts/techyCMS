@@ -139,7 +139,9 @@ function ComponentSettings({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{component ? component.name : "New Component"}</SheetTitle>
+          <SheetTitle>
+            {component ? component.name : "New Component"}
+          </SheetTitle>
           <SheetDescription>
             {component ? component.category : "Create a new component"}
           </SheetDescription>
@@ -215,7 +217,7 @@ const CodeTabs = ({ form }: { form: FormType }) => {
   const tabs = ["html", "css"];
   type Name = "name" | "category" | "html" | "css";
 
-  const TabsContentList = () =>
+  const TabsContentList = ({ className }: { className?: string }) =>
     tabs.map((lang) => (
       <TabsContent value={lang} key={lang}>
         <FormField
@@ -225,7 +227,12 @@ const CodeTabs = ({ form }: { form: FormType }) => {
             <FormItem>
               <FormLabel className="sr-only">{lang.toUpperCase()}</FormLabel>
               <FormControl>
-                <CodeEditor code={field.value} setCode={field.onChange} />
+                <CodeEditor
+                  className={className}
+                  language={lang as "html" | "css"}
+                  code={field.value}
+                  setCode={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -234,7 +241,7 @@ const CodeTabs = ({ form }: { form: FormType }) => {
       </TabsContent>
     ));
 
-  const MainTabs = () => (
+  const MainTabs = ({ className }: { className?: string }) => (
     <Tabs defaultValue="html" className="w-full">
       <div className="flex justify-between items-center">
         <TabsList>
@@ -253,13 +260,13 @@ const CodeTabs = ({ form }: { form: FormType }) => {
           {dialogOpen ? <FiMinimize2 /> : <FiMaximize2 />}
         </Button>
       </div>
-      <TabsContentList />
+      <TabsContentList className={className} />
     </Tabs>
   );
 
   return (
     <>
-      <MainTabs />
+      <MainTabs className="max-h-80 overflow-y-auto" />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>

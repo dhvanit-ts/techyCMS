@@ -5,15 +5,18 @@ import "prismjs/components/prism-markup";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-javascript";
 import "prismjs/themes/prism.css";
+import { cn } from "@/lib/utils";
 
 function CodeEditor({
   code,
   setCode,
   language = "html",
+  className,
 }: {
   code: string;
   setCode?: (code: string) => void;
   language?: "html" | "css" | "javascript";
+  className?: string;
 }) {
   const prismLanguage =
     language === "html"
@@ -23,7 +26,7 @@ function CodeEditor({
       : languages.js;
 
   return (
-    <div className="border border-zinc-200 rounded-lg shadow-md max-h-[500px] overflow-auto">
+    <div className={cn("border border-zinc-200 rounded-lg shadow-md max-h-[500px] overflow-auto", className)}>
       <Editor
         value={code}
         onValueChange={setCode || (() => {})}
@@ -35,7 +38,7 @@ function CodeEditor({
           minHeight: 200,
         }}
         textareaClassName="w-full outline-none"
-        preClassName="w-full m-0"
+        preClassName="w-full m-0 o"
         placeholder="Inject your code here"
       />
     </div>
