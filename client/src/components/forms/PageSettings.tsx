@@ -83,7 +83,7 @@ function PageSettings({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     const fetcherFn = page ? fetcher.patch : fetcher.post;
-    const url = page ? `/pages/${page.id}/update` : `/pages`;
+    const url = page ? `/pages/${page.id}/update-settings` : `/pages`;
     const data = page
       ? { ...values }
       : { ...values, html: "<h1>Hello world 👋</h1>", css: "*{margin:0;padding:0;}" };

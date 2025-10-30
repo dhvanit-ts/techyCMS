@@ -4,15 +4,27 @@ import { useParams, usePathname } from "next/navigation";
 import StudioEditor from "@grapesjs/studio-sdk/react";
 import type { Editor } from "grapesjs";
 import { useEditorStorage } from "@/hooks/useEditorStorage";
-import { editorOptions } from "@/components/editor/EditorConfig";
+import {
+  customThemeConfig,
+  defaultAssets,
+  deviceConfig,
+  globalStylesConfig,
+  createLayoutConfig,
+  pluginsConfig,
+} from "@/components/editor/StudioUtils";
 import "@grapesjs/studio-sdk/style";
 import { fetchProject, saveProject } from "@/utils/projectApis";
 import fetcher from "@/utils/fetcher";
 import { IComponent } from "@/types/IComponent";
+import { useState } from "react";
+import { IPage } from "@/types/IPage";
 
 const STORAGE_KEY = "DEMO_PROJECT_ID";
 
 export default function EditorApp() {
+
+  const [page, setPage] = useState<null | IPage>(null);
+
   const pathname = usePathname();
   const params = useParams();
   const slug = (params?.slug as string) ?? null;
@@ -46,10 +58,12 @@ export default function EditorApp() {
   const onReady = async (editor: Editor) => {
     (window as unknown as { editor?: Editor }).editor = editor;
     if (!slug) return;
-    const { html, css } = await fetchProject(slug);
-    editor.setComponents(html || "<h1>New Project</h1>");
-    if (css) editor.setStyle(css);
+    const page = await fetchProject(slug);
+    editor.setComponents(page.html || "<h1>New Project</h1>");
+    if (page.css) editor.setStyle(page.css);
     await save(editor);
+
+    setPage(page);
 
     const components = await fetchComponents();
     components?.map((component) =>
@@ -76,9 +90,28 @@ export default function EditorApp() {
     const project = await load();
     return {
       project: project || {
-        pages: [{ name: "Home", component: "<h1>New Project</h1>" }],
+        pages: [
+          {
+            name: page?.title,
+            component: "<h1>Hello Studio SDK 👋</h1>",
+          }],
       },
     };
+  };
+
+  const editorOptions = {
+    theme: "dark",
+    fonts: { enableFontManager: true },
+    layout: createLayoutConfig(),
+    globalStyles: globalStylesConfig,
+    devices: deviceConfig,
+    plugins: pluginsConfig,
+    project: {
+      default: {
+        assets: defaultAssets,
+        pages: [{ name: page?.title, component: "<h1>Hello Studio SDK 👋</h1>" }],
+      },
+    },
   };
 
   return (

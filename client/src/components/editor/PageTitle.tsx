@@ -19,16 +19,6 @@ const PageTitle = ({ editor }: { editor: Editor }) => {
       });
       setPageName(slug as string)
     }
-
-    // Listen for page changes
-    const onPageChange = (page: { getName: () => string }) => {
-      setPageName(page.getName() || "Untitled Page");
-    };
-
-    editor.on("page:select", onPageChange);
-    return () => {
-      editor.off("page:select", onPageChange);
-    };
   }, [editor, slug]);
 
   return (

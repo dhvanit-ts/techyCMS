@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changeVisibilityStatus,
   createLink,
   deleteLink,
   getLink,
@@ -15,5 +16,6 @@ router.patch("/reorder/:sectionId", updateLinksOrder);
 router.post("/", createLink);
 router.patch("/:id/update", updateLink);
 router.delete("/:id", deleteLink);
+router.patch("/:id/visibility", changeVisibilityStatus);
 
 export default router;

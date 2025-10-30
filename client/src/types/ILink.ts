@@ -7,6 +7,7 @@ export interface ILink {
   sectionId: string;
   parentId?: string | null;
   order?: number;
+  active: boolean;
   children?: ILink[];
   createdAt?: Date;
   updatedAt?: Date;

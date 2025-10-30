@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { deletePage, getPage, getPages, publishPage, savePage, updatePage } from "../controllers/pages.controller";
+import { deletePage, getPage, getPages, publishPage, savePage, updatePage, updatePageSettings } from "../controllers/pages.controller";
 
 const router = Router();
 router.get("/", getPages);
 router.get("/:slug", getPage);
 router.post("/", savePage);
-router.patch("/:id/publish", publishPage);
-router.patch("/:id/update", updatePage);
+router.patch("/:slug/publish", publishPage);
+router.patch("/:slug/update", updatePage);
+router.patch("/:id/update-settings", updatePageSettings);
 router.delete("/:slug", deletePage);
 
 export default router;

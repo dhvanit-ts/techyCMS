@@ -40,6 +40,8 @@ model Link {
   href      String?
   target    String?
   rel       String?
+  active    Boolean @default(true)
+
   sectionId String
   section   Section @relation(fields: [sectionId], references: [id])
 

@@ -13,7 +13,7 @@ const checkAuthError = async (err: AxiosError) => {
     if (errorCode === "UNAUTHORIZED") {
       try {
         const refresh = await axios.post(
-          `${process.env.SERVER_ENDPOINT}/users/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL}/admin/refresh`,
           {},
           { withCredentials: true }
         );

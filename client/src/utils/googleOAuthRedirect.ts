@@ -2,7 +2,7 @@ const handleGoogleOAuthRedirect = (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
 
   const client_id = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
-  const redirect_uri = `${process.env.NEXT_PUBLIC_API_URL}/users/google/callback`;
+  const redirect_uri = `${process.env.NEXT_PUBLIC_API_URL}/admin/google/callback`;
 
   if (!client_id || !redirect_uri) return;
 

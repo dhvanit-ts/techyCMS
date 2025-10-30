@@ -136,3 +136,29 @@ export const updateLinksOrder = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to update links order" });
   }
 };
+
+export const changeVisibilityStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { active } = req.body;
+
+    const link = await prisma.link.findUnique({
+      where: { id },
+    });
+
+    if (link) {
+      await prisma.link.update({
+        where: { id },
+        data: { active },
+      });
+      return res.status(200).json({ message: "Visibility status updated" });
+    } else {
+      return res.status(404).json({ error: "Link not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ error: "Failed to update visibility status" });
+  }
+};

@@ -25,7 +25,7 @@ export const googleCallback = async (req: Request, res: Response) => {
           code,
           client_id: env.GOOGLE_OAUTH_CLIENT_ID,
           client_secret: env.GOOGLE_OAUTH_CLIENT_SECRET,
-          redirect_uri: `${env.SERVER_BASE_URI}/api/v1/users/google/callback`,
+          redirect_uri: `${env.SERVER_BASE_URI}/api/v1/admin/google/callback`,
           grant_type: "authorization_code",
         },
         headers: {

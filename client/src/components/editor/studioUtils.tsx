@@ -81,8 +81,6 @@ const publishWebsite = async (editor: Editor) => {
   await fetcher.post({
     endpointPath: "/pages",
     data: {
-      title: "My Website",
-      slug: "my-website",
       html,
       css,
       status: "published",
@@ -614,69 +612,71 @@ export const deviceConfig: CreateEditorOptions["devices"] = {
   ],
 };
 
-export const layoutConfig: CreateEditorOptions["layout"] = {
-  default: {
-    type: "column",
-    className: "h-full",
-    children: [
-      {
-        type: "sidebarTop",
-        height: topSidebarSize,
-        className: "items-center",
-        style: {
-          backgroundImage:
-            "linear-gradient(90deg, rgb(12, 13, 14), rgb(12, 13, 14))",
+export const createLayoutConfig = (): CreateEditorOptions["layout"] => {
+  return {
+    default: {
+      type: "column",
+      className: "h-full",
+      children: [
+        {
+          type: "sidebarTop",
+          height: topSidebarSize,
+          className: "items-center",
+          style: {
+            backgroundImage:
+              "linear-gradient(90deg, rgb(12, 13, 14), rgb(12, 13, 14))",
+          },
+          children: createTopbarPanel(),
         },
-        children: createTopbarPanel(),
-      },
-      {
-        type: "row",
-        className: "flex-grow",
-        children: [
-          {
-            type: "column",
-            id: "hiddenLeftContainer",
-            style: {
-              height: "90%",
+        {
+          type: "row",
+          className: "flex-grow",
+          children: [
+            {
+              type: "column",
+              id: "hiddenLeftContainer",
+              style: {
+                height: "90%",
+              },
             },
-          },
-          { type: "canvas", grow: false },
-          {
-            type: "sidebarRight",
-            children: {
-              type: "tabs",
-              value: "styles",
-              tabs: [
-                {
-                  id: "styles",
-                  label: "Styles",
-                  children: {
-                    type: "column",
-                    style: { height: "100%" },
-                    children: [
-                      { type: "panelSelectors", style: { padding: 5 } },
-                      { type: "panelStyles" },
-                    ],
+            { type: "canvas", grow: false },
+            {
+              type: "sidebarRight",
+              children: {
+                type: "tabs",
+                value: "styles",
+                tabs: [
+                  {
+                    id: "styles",
+                    label: "Styles",
+                    children: {
+                      type: "column",
+                      style: { height: "100%" },
+                      children: [
+                        { type: "panelSelectors", style: { padding: 5 } },
+                        { type: "panelStyles" },
+                      ],
+                    },
                   },
-                },
-                {
-                  id: "props",
-                  label: "Properties",
-                  children: {
-                    type: "panelProperties",
-                    style: { padding: 5, height: "100%" },
+                  {
+                    id: "props",
+                    label: "Properties",
+                    children: {
+                      type: "panelProperties",
+                      style: { padding: 5, height: "100%" },
+                    },
                   },
-                },
-                {
-                  id: "custom",
-                  label: "Custom",
-                  children: ["New custom tab"],
-                },
-              ],
+                  {
+                    id: "custom",
+                    label: "Custom",
+                    children: ["New custom tab"],
+                  },
+                ],
+              },
             },
-          },
-        ],
-      },
-    ],
-  },
+          ],
+        },
+      ],
+    },
+  }
 };

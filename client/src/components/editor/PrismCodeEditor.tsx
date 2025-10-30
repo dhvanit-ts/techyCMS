@@ -18,6 +18,7 @@ function CodeEditor({
   language?: "html" | "css" | "javascript";
   className?: string;
 }) {
+
   const prismLanguage =
     language === "html"
       ? languages.markup

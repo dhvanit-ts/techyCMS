@@ -19,34 +19,6 @@ import { ILink } from "@/types/ILink";
 import { Spinner } from "@/components/ui/spinner";
 
 function ComponentsPage() {
-  const [components, setComponents] = useState<IComponent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const { handleAuthError } = useHandleAuthError();
-
-  const fetchPages = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = (await fetcher.get<{ data: IComponent[] }>({
-        endpointPath: "/components",
-        returnNullIfError: true,
-        statusShouldBe: 200,
-        fallbackErrorMessage: "Error fetching components",
-      })) as { data: IComponent[] };
-
-      setComponents(data?.data ?? []);
-    } catch (error) {
-      handleAuthError(error as AxiosError);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    fetchPages();
-  }, [fetchPages]);
-
   return (
     <div className="px-4 pt-12">
       <h1 className="text-3xl font-semibold text-zinc-900 mb-4 flex justify-between">
@@ -104,29 +76,12 @@ const HeaderComponent = () => {
         setLoading(false);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const updateMenu = async (components: IComponent[]) => {
-    try {
-      setLoading(true);
-      await fetcher.patch({
-        endpointPath: "/components",
-        data: { components },
-        fallbackErrorMessage: "Error updating components",
-        statusShouldBe: 200,
-      });
-    } catch (error) {
-      console.log(error);
-      handleAuthError(error as AxiosError);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className={cn("pt-4 space-y-2", !section.isCustom && "w-fit")}>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center h-10">
         <Field
           orientation="horizontal"
           className="w-fit bg-zinc-100 px-2 py-1 rounded-full"
@@ -140,18 +95,25 @@ const HeaderComponent = () => {
             checked={section.isCustom}
           />
         </Field>
-        <LinkForm setLinks={setLinks}>
-          <Button variant="outline">Add</Button>
-        </LinkForm>
+        {!section.isCustom && (
+          <LinkForm setLinks={setLinks}>
+            <Button variant="outline">Add</Button>
+          </LinkForm>
+        )}
       </div>
       <div>
         {section.isCustom ? (
-          <div>
-            <CodeEditor code="" className="bg-zinc-100" />
-          </div>
+          <CustomEditor />
         ) : (
-          <div>
-            {loading ? <div className="bg-zinc-100 w-[25rem] h-30 rounded-md shadow-md flex justify-center items-center"><Spinner/></div> : <SortableCards sectionId={section.id} />}
+          <div className={cn(loading ? "w-[40rem]" : "min-w-[40rem]")}>
+            {
+              loading ? (
+                <div className="bg-zinc-100 w-full h-30 rounded-md shadow-md flex justify-center items-center" >
+                  <Spinner />
+                </div>
+              ) : (
+                <SortableCards sectionId={section.id} />
+              )}
           </div>
         )}
       </div>
@@ -159,6 +121,15 @@ const HeaderComponent = () => {
   );
 };
 const FooterComponent = () => <div>Footer</div>;
+
+const CustomEditor = () => {
+  const [code, setCode] = useState("");
+  return (
+    <div>
+      <CodeEditor code={code} setCode={setCode} className="bg-zinc-100" />
+    </div>
+  )
+}
 
 const tabs = [
   {

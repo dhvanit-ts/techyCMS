@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, ReactNode, forwardRef, ButtonHTMLAttributes } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -11,24 +11,16 @@ import {
   PointerSensor,
   DragOverlay,
 } from "@dnd-kit/core";
-import { ILink } from "@/types/ILink";
-import { MdDelete, MdEdit } from "react-icons/md";
-import { Button } from "../ui/button";
-import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
-import LinkForm from "../forms/LinkForm";
 import useLinkStore from "@/store/linkStore";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
+import { ILink } from "@/types/ILink";
+import { Button } from "../ui/button";
 import fetcher from "@/utils/fetcher";
+import { MdDelete, MdEdit } from "react-icons/md";
+import LinkForm from "../forms/LinkForm";
+import { IoMdEye, IoMdEyeOff } from "react-icons/io";
+import { cn } from "@/lib/utils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { Spinner } from "../ui/spinner";
 import { toast } from "sonner";
 
 type DropIndicator = {
@@ -126,6 +118,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   activeId,
 }) => {
   const itemRef = useRef<HTMLDivElement | null>(null);
+  const setLinks = useLinkStore(s => s.setLinks)
 
   const {
     attributes,
@@ -174,7 +167,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   };
 
   return (
-    <>
+    <div style={{ marginBottom: 0 }}>
       {showBeforeLine && (
         <div
           style={{
@@ -187,8 +180,26 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         />
       )}
       <div ref={setNodeRef}>
-        <div style={style} {...attributes} {...listeners}>
-          <Tab Link={Link} />
+        <div style={style} className="group hover:!bg-gradient-to-r hover:!from-[#f5f5f5] via-[#f5f5f5] hover:!to-zinc-200/80" {...attributes} {...listeners}>
+          <div style={{ fontWeight: 500, color: "#333" }}>
+            <div>
+              <h4 style={{ margin: 0 }}>{Link.label}</h4>
+              <p
+                style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#666" }}
+              >
+                {Link.href}
+              </p>
+            </div>
+          </div>
+          <div className="absolute opacity-0 group-hover:opacity-100 transition-colors duration-150 pr-4 gap-0.5 flex justify-center items-center right-0 top-0 rounded-r h-full">
+            <LinkForm link={Link} setLinks={setLinks}>
+              <ActionButton>
+                <MdEdit size={16} />
+              </ActionButton>
+            </LinkForm>
+            <ToggleVisibilityButton Link={Link} />
+            <DeleteTab Link={Link} />
+          </div>
           {showInsideHighlight && (
             <div
               style={{
@@ -202,129 +213,171 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             />
           )}
         </div>
-
-        {Link.children && Link.children.length > 0 && (
-          <div style={{ paddingLeft: 24, marginTop: 8 }}>
-            {Link.children.map((child) => (
-              <DraggableItem
-                key={child.id}
-                Link={child}
-                dropIndicator={dropIndicator}
-                activeId={activeId}
-              />
-            ))}
-          </div>
-        )}
       </div>
+
+      {Link.children && Link.children.length > 0 && (
+        <div style={{ paddingLeft: 24, marginTop: 8 }}>
+          {Link.children.map((child) => (
+            <DraggableItem
+              key={child.id}
+              Link={child}
+              dropIndicator={dropIndicator}
+              activeId={activeId}
+            />
+          ))}
+        </div>
+      )}
+
       {showAfterLine && (
         <div
           style={{
             height: "3px",
             background: "#2196f3",
             borderRadius: "2px",
+            marginTop: "8px",
             marginBottom: "8px",
             boxShadow: "0 0 4px rgba(33, 150, 243, 0.5)",
           }}
         />
       )}
-    </>
-  );
-};
-
-const Tab = ({ Link }: { Link: ILink }) => {
-  const handleDelete = async () => {
-    const toastId = toast.loading("Deleting link...");
-    await fetcher.delete({
-      endpointPath: `/components/${Link.id}`,
-      data: { id: Link.id },
-      onSuccess: () => {
-        toast.success("Link deleted successfully");
-      },
-      onError: () => toast.error("Error deleting link"),
-      finallyDoThis: () => toast.dismiss(toastId),
-    });
-  };
-
-  return (
-    <div
-      style={{ fontWeight: 500, color: "#333" }}
-      className="flex justify-between relative group"
-    >
-      <div>
-        <h4>{Link.label}</h4>
-        <p className="text-zinc-600 text-xs">{Link.href}</p>
-      </div>
-      <div className="absolute -right-4 -top-3 opacity-0 group-hover:opacity-100 transition-all">
-        <ButtonGroup
-          orientation="vertical"
-          className="border border-zinc-300 rounded-md"
-        >
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="secondary"
-                className="text-red-600 bg-gray-200 hover:text-zinc-100 hover:bg-red-600"
-                size="icon-sm"
-              >
-                <MdDelete />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <ButtonGroupSeparator />
-          <LinkForm link={Link} setLinks={useLinkStore((s) => s.setLinks)}>
-            <Button variant="secondary" className="bg-gray-200" size="icon-sm">
-              <MdEdit />
-            </Button>
-          </LinkForm>
-        </ButtonGroup>
-      </div>
     </div>
   );
 };
 
-function assignOrderRecursive(
-  links: ILink[],
-  parentId: string | null = null
-): ILink[] {
-  return links.map((link, index) => {
-    const updated = {
-      ...link,
-      parentId,
-      order: index,
-      children: assignOrderRecursive(link.children || [], link.id),
-    };
-    return updated;
-  });
+const DeleteTab = ({ Link }: { Link: ILink }) => {
+  const [open, setOpen] = useState(false)
+  const removeLink = useLinkStore(s => s.removeLink)
+
+  const handleDelete = async () => {
+    const toastId = toast.loading("Deleting tab...")
+    try {
+      await fetcher.delete({
+        endpointPath: `/links/${Link.id}`,
+        data: {},
+        onSuccess: () => {
+          removeLink(Link.id)
+        }
+      })
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setOpen(false)
+      toast.dismiss(toastId)
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <ActionButton className="text-zinc-700 hover:bg-red-500 hover:text-zinc-100">
+          <MdDelete size={16} />
+        </ActionButton>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Tab</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete this tab? This action cannot be
+            undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button onClick={handleDelete} variant="destructive">Delete</Button>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+const ToggleVisibilityButton = ({ Link }: { Link: ILink }) => {
+
+  const [isLoading, setIsLoading] = useState(false)
+
+  const updateLinkVisibilityStatus = useLinkStore(s => s.updateLinkVisibilityStatus)
+
+  const handleChangeVisibility = async () => {
+    try {
+      setIsLoading(true)
+      await fetcher.patch({
+        endpointPath: `/links/${Link.id}/visibility`,
+        data: { active: !Link.active },
+        onSuccess: () => {
+          updateLinkVisibilityStatus(Link.id)
+        }
+      })
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  };
+  return (
+    <ActionButton onClick={handleChangeVisibility}>
+      {isLoading ? <Spinner /> : (Link.active ? <IoMdEye size={16} /> : <IoMdEyeOff size={16} />)}
+    </ActionButton>
+  )
+}
+
+interface ActionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  className?: string;
+}
+
+const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
+  ({ children, className, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(
+          "flex justify-center items-center size-10 rounded-full active:translate-y-0 active:shadow-md hover:-translate-y-0.5 hover:shadow-lg text-zinc-700 hover:bg-zinc-100 hover:text-zinc-800 transition-all cursor-pointer",
+          className
+        )}
+        {...props} // <-- crucial
+      >
+        {children}
+      </button>
+    );
+  }
+);
+
+ActionButton.displayName = "ActionButton";
+
+function flattenLinksForAPI(links: ILink[]): Omit<ILink, "children">[] {
+  const result: Omit<ILink, "children">[] = [];
+
+  function flatten(items: ILink[], parentId: string | null = null) {
+    items.forEach((item, index) => {
+      const { children, ...itemWithoutChildren } = item;
+      result.push({
+        ...itemWithoutChildren,
+        parentId,
+        order: index,
+      });
+
+      if (children && children.length > 0) {
+        flatten(children, item.id);
+      }
+    });
+  }
+
+  flatten(links);
+  return result;
 }
 
 const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
   const items = useLinkStore((s) => s.links);
   const setItems = useLinkStore((s) => s.setLinks);
+  const [links, setLinks] = useState<ILink[]>(items);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [links, setLinks] = useState<ILink[]>(items);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(
     null
   );
-
-  useEffect(() => {
-    setLinks(items);
-  }, [items]);
 
   const pointerPosRef = useRef({ x: 0, y: 0 });
 
@@ -357,7 +410,6 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
       return;
     }
 
-    // Get the element for the over target - use data-Link-id
     const overElement = document.querySelector(
       `[data-Link-id="${over.id}"]`
     ) as HTMLElement;
@@ -366,7 +418,6 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
       return;
     }
 
-    // Get only the content area rect (not including children)
     const contentElement = overElement.firstElementChild as HTMLElement;
     if (!contentElement) {
       setDropIndicator(null);
@@ -376,7 +427,6 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
     const rect = contentElement.getBoundingClientRect();
     const mouseY = pointerPosRef.current.y;
 
-    // Check if mouse is within the content area bounds
     if (mouseY < rect.top || mouseY > rect.bottom) {
       setDropIndicator(null);
       return;
@@ -395,7 +445,6 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
       position = "inside";
     }
 
-    // Check if trying to drop into self or descendant
     if (position === "inside") {
       const activeItem = findItemById(links, String(active.id));
       if (activeItem && isDescendant(activeItem, String(over.id))) {
@@ -419,7 +468,6 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
 
     if (!over || !currentDropIndicator || active.id === over.id) return;
 
-    // Don't allow dropping an Link into itself or its descendants
     const activeItem = findItemById(links, String(active.id));
     if (activeItem && currentDropIndicator.position === "inside") {
       if (isDescendant(activeItem, String(over.id))) {
@@ -447,51 +495,23 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
 
   const activeItem = activeId ? findItemById(links, activeId) : null;
 
-  // Add data-id to each Link for easier lookup
-  useEffect(() => {
-    const addDataId = (element: HTMLElement) => {
-      const id =
-        element.getAttribute("data-rbd-draggable-id") ||
-        element.getAttribute("data-rbd-droppable-id");
-      if (id) {
-        element.setAttribute("data-id", id);
-      }
-    };
-
-    const observer = new MutationObserver(() => {
-      document
-        .querySelectorAll("[data-rbd-draggable-id], [data-rbd-droppable-id]")
-        .forEach((el) => {
-          addDataId(el as HTMLElement);
-        });
+  const handleSaveChanges = () => {
+    const flattenedLinks = flattenLinksForAPI(links);
+    fetcher.patch({
+      endpointPath: `/links/reorder/${sectionId}`,
+      data: { links: flattenedLinks },
+      fallbackErrorMessage: "Error updating links",
+      statusShouldBe: 200,
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-
-  const handleUpdateLinksOrder = () => {
-    const toastId = toast.loading("Updating links order...");
-    try {
-      const orderedLinks = assignOrderRecursive(links);
-
-      fetcher.patch({
-        endpointPath: `/links/reorder/${sectionId}`,
-        data: { links: orderedLinks },
-        fallbackErrorMessage: "Error updating links",
-        statusShouldBe: 200,
-      });
-
-      setItems(orderedLinks);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      toast.dismiss(toastId);
-      toast.success("Links updated successfully");
-    }
+    setItems(flattenedLinks);
   };
 
-  const areListsDifferent = (a: ILink[] = [], b: ILink[] = []) => {
+  const handleDiscardChanges = () => {
+    setLinks(items);
+  };
+
+  const areListsDifferent = (a: ILink[], b: ILink[]): boolean => {
     if (a.length !== b.length) return true;
 
     for (let i = 0; i < a.length; i++) {
@@ -508,6 +528,10 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
 
   const hasChanged = areListsDifferent(links, items);
 
+  useEffect(() => {
+    setLinks(items);
+  }, [items])
+
   return (
     <>
       <DndContext
@@ -519,22 +543,29 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
       >
         <div
           style={{
-            width: 400,
+            width: "100%",
             padding: 24,
             background: "#fff",
             borderRadius: 8,
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            height: "fit-content",
           }}
         >
-          <h2 style={{ marginBottom: 20, color: "#333" }}>Nested Tabs</h2>
-          {links.map((Link) => (
+          <h2 style={{ marginTop: 0, marginBottom: 20, color: "#333" }}>
+            Nested Tabs
+          </h2>
+          {links.length > 0 ? links.map((Link) => (
             <DraggableItem
               key={Link.id}
               Link={Link}
               dropIndicator={dropIndicator}
               activeId={activeId}
             />
-          ))}
+          )) : (
+            <p className="text-sm text-zinc-600">
+              No nested tabs available
+            </p>
+          )}
         </div>
 
         <DragOverlay>
@@ -554,10 +585,11 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
           ) : null}
         </DragOverlay>
       </DndContext>
+
       {hasChanged && (
-        <div className="flex gap-2 mt-4">
-          <Button onClick={handleUpdateLinksOrder}>Save changes</Button>
-          <Button variant="outline" onClick={() => setLinks(items)}>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={handleSaveChanges}>Save changes</Button>
+          <Button onClick={handleDiscardChanges} variant="outline">
             Discard changes
           </Button>
         </div>
