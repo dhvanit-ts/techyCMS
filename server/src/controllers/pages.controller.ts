@@ -73,7 +73,7 @@ export const savePage = async (req: Request, res: Response) => {
   try {
     const { title, slug, html, css, status, metadata } = req.body;
 
-    if (!title || !slug || !html || !css || !status) {
+    if (!html || !css || !status) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 

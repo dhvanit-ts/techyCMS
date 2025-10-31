@@ -8,7 +8,7 @@ interface PageProps {
 }
 
 export default async function ProjectPage({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
 
   if (!slug) redirect("/");
 
