@@ -22,17 +22,45 @@ export const updateLink = async (req: Request, res: Response) => {
   }
 };
 
+function buildLinkTree(links: any[]) {
+  const linkMap = new Map();
+  const tree: any[] = [];
+
+  // First, create a map of all links
+  links.forEach(link => {
+    linkMap.set(link.id, { ...link, children: [] });
+  });
+
+  // Then, build the tree structure
+  links.forEach(link => {
+    const node = linkMap.get(link.id);
+    if (link.parentId === null) {
+      tree.push(node);
+    } else {
+      const parent = linkMap.get(link.parentId);
+      if (parent) {
+        parent.children.push(node);
+      }
+    }
+  });
+
+  return tree;
+}
+
 export const getLinksBySection = async (req: Request, res: Response) => {
   try {
     const links = await prisma.link.findMany({
       where: {
         sectionId: req.params.sectionId,
       },
-      orderBy: {
-        order: "asc",
-      },
+      orderBy: [
+        { parentId: "asc" },
+        { order: "asc" }
+      ],
     });
-    return res.status(200).json({ data: links });
+    
+    const linkTree = buildLinkTree(links);
+    return res.status(200).json({ data: linkTree });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Failed to retrieve links" });

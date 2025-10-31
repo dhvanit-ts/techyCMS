@@ -347,28 +347,6 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
 
 ActionButton.displayName = "ActionButton";
 
-function flattenLinksForAPI(links: ILink[]): Omit<ILink, "children">[] {
-  const result: Omit<ILink, "children">[] = [];
-
-  function flatten(items: ILink[], parentId: string | null = null) {
-    items.forEach((item, index) => {
-      const { children, ...itemWithoutChildren } = item;
-      result.push({
-        ...itemWithoutChildren,
-        parentId,
-        order: index,
-      });
-
-      if (children && children.length > 0) {
-        flatten(children, item.id);
-      }
-    });
-  }
-
-  flatten(links);
-  return result;
-}
-
 const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
   const items = useLinkStore((s) => s.links);
   const setItems = useLinkStore((s) => s.setLinks);
@@ -401,6 +379,28 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
   };
+
+    function flattenLinksForAPI(links: ILink[]): Omit<ILink, "children">[] {
+    const result: Omit<ILink, "children">[] = [];
+  
+    function flatten(items: ILink[], parentId: string | null = null) {
+      items.forEach((item, index) => {
+        const { children, ...itemWithoutChildren } = item;
+        result.push({
+          ...itemWithoutChildren,
+          parentId,
+          order: index,
+        });
+  
+        if (children && children.length > 0) {
+          flatten(children, item.id);
+        }
+      });
+    }
+  
+    flatten(links);
+    return result;
+  }
 
   const handleDragMove = (event: DragMoveEvent) => {
     const { over, active } = event;
@@ -504,7 +504,7 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
       statusShouldBe: 200,
     });
 
-    setItems(flattenedLinks);
+    setItems(links);
   };
 
   const handleDiscardChanges = () => {
