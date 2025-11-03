@@ -380,9 +380,9 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
     setActiveId(String(event.active.id));
   };
 
-    function flattenLinksForAPI(links: ILink[]): Omit<ILink, "children">[] {
+  function flattenLinksForAPI(links: ILink[]): Omit<ILink, "children">[] {
     const result: Omit<ILink, "children">[] = [];
-  
+
     function flatten(items: ILink[], parentId: string | null = null) {
       items.forEach((item, index) => {
         const { children, ...itemWithoutChildren } = item;
@@ -391,13 +391,13 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
           parentId,
           order: index,
         });
-  
+
         if (children && children.length > 0) {
           flatten(children, item.id);
         }
       });
     }
-  
+
     flatten(links);
     return result;
   }
@@ -551,9 +551,14 @@ const NestedTabsDnD = ({ sectionId }: { sectionId: string }) => {
             height: "fit-content",
           }}
         >
-          <h2 style={{ marginTop: 0, marginBottom: 20, color: "#333" }}>
-            Nested Tabs
-          </h2>
+          <div className="flex justify-between">
+            <h2 className="inline-block" style={{ marginTop: 0, marginBottom: 20, color: "#333" }}>
+              Nested Tabs
+            </h2>
+            <LinkForm setLinks={setLinks}>
+              <Button className="bg-zinc-100 hover:bg-zinc-200" variant="outline">Add</Button>
+            </LinkForm>
+          </div>
           {links.length > 0 ? links.map((Link) => (
             <DraggableItem
               key={Link.id}

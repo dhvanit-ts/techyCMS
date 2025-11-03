@@ -8,14 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useHandleAuthError from "@/hooks/useHandleAuthError";
 import fetcher from "@/utils/fetcher";
 import { AxiosError } from "axios";
-import { v4 as uuid } from "uuid";
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import LinkForm from "@/components/forms/LinkForm";
 import useLinkStore from "@/store/linkStore";
 import { cn } from "@/lib/utils";
 import { ILink } from "@/types/ILink";
 import { Spinner } from "@/components/ui/spinner";
+import LogoEditor from "@/components/editor/LogoEditor";
 
 function ComponentsPage() {
   return (
@@ -50,10 +48,10 @@ interface TSection {
   isCustom: boolean;
 }
 
-const HeaderComponent = () => {
+const TabsEditor = ({ id }: { id: string }) => {
   const [loading, setLoading] = useState(true);
   const [section, setSection] = useState<TSection>({
-    id: uuid(),
+    id,
     isCustom: false,
   });
   const { handleAuthError } = useHandleAuthError();
@@ -64,7 +62,7 @@ const HeaderComponent = () => {
       try {
         setLoading(true);
         const data = await fetcher.get<{ data: ILink[] }>({
-          endpointPath: `/links/many/section/dad30d28-a2b0-4052-a59b-45c56592f27b`,
+          endpointPath: `/links/many/section/${id}`,
           fallbackErrorMessage: "Error fetching components",
         });
 
@@ -79,7 +77,7 @@ const HeaderComponent = () => {
   }, []);
 
   return (
-    <div className={cn("pt-4 space-y-2", !section.isCustom && "w-fit")}>
+    <div className={cn("pt-4 space-y-2 flex-3", !section.isCustom && "w-fit")}>
       <div className="flex justify-between items-center h-10">
         <Field
           orientation="horizontal"
@@ -94,17 +92,12 @@ const HeaderComponent = () => {
             checked={section.isCustom}
           />
         </Field>
-        {!section.isCustom && (
-          <LinkForm setLinks={setLinks}>
-            <Button variant="outline">Add</Button>
-          </LinkForm>
-        )}
       </div>
       <div>
         {section.isCustom ? (
           <CustomEditor />
         ) : (
-          <div className={cn(loading ? "w-[40rem]" : "min-w-[40rem]")}>
+          <div className="min-w-[40rem]">
             {
               loading ? (
                 <div className="bg-zinc-100 w-full h-30 rounded-md shadow-md flex justify-center items-center" >
@@ -119,13 +112,53 @@ const HeaderComponent = () => {
     </div>
   );
 };
-const FooterComponent = () => <div>Footer</div>;
+
+const codingLanguages: { value: "css" | "html"; label: string }[] = [
+  {
+    value: "html",
+    label: "HTML",
+  },
+  {
+    value: "css",
+    label: "CSS",
+  },
+];
 
 const CustomEditor = () => {
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState({
+    html: "",
+    css: "",
+  });
+
+  const setLangCode = (lang: "html" | "css", code: { html: string; css: string }) =>
+    setCode({ ...code, [lang]: code });
+
   return (
-    <div>
-      <CodeEditor code={code} setCode={setCode} className="bg-zinc-100" />
+    <Tabs defaultValue="html">
+      <TabsList>
+        {codingLanguages.map((lang) => <TabsTrigger key={lang.value} value={lang.value}>{lang.label}</TabsTrigger>)}
+      </TabsList>
+      {codingLanguages.map((lang) =>
+        <TabsContent value={lang.value} key={lang.value}>
+          <CodeEditor code={code[lang.value]} language={lang.value} setCode={() => setLangCode(lang.value, code)} />
+        </TabsContent>
+      )}
+    </Tabs>
+  )
+}
+
+const SectionForm = ({ id }: { id: string }) => {
+  const [section, setSection] = useState<TSection>({
+    id,
+    isCustom: false,
+  });
+
+  return (
+    <div className="flex flex-col xl:flex-row justify-center xl:gap-4 max-w-6xl mx-auto">
+      <TabsEditor id={id} />
+      <div className="xl:mt-16 pt-4 xl:pt-0.5 flex-1">
+        <LogoEditor />
+      </div>
     </div>
   )
 }
@@ -134,13 +167,13 @@ const tabs = [
   {
     value: "header",
     label: "Header",
-    content: <HeaderComponent />,
+    content: <SectionForm id="dad30d28-a2b0-4052-a59b-45c56592f27b" />,
     defaultChecked: true,
   },
   {
     value: "footer",
     label: "Footer",
-    content: <FooterComponent />,
+    content: <SectionForm id="5edb327f-a0bc-4764-9362-5a414e91a4b6" />,
   },
 ];
 

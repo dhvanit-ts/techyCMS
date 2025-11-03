@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../db";
+import { buildLinkTree } from "../utils/buildLinkTree";
 
 export const getSections = async (req: Request, res: Response) => {};
 
@@ -39,7 +40,9 @@ export const getSection = async (req: Request, res: Response) => {
         id,
       },
       include: {
-        links: true,
+        links: {
+          orderBy: [{ parentId: "asc" }, { order: "asc" }],
+        },
       },
     });
 
@@ -47,7 +50,8 @@ export const getSection = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Section not found" });
     }
 
-    return res.status(200).json({ data: section });
+    const links = buildLinkTree(section.links);
+    return res.status(200).json({ data: { ...section, links } });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Failed to get section" });

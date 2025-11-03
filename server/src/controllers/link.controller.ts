@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../db/index";
+import { buildLinkTree } from "../utils/buildLinkTree";
 
 export const updateLink = async (req: Request, res: Response) => {
   try {
@@ -8,6 +9,10 @@ export const updateLink = async (req: Request, res: Response) => {
     });
 
     if (link) {
+      if (req.body.children) {
+        delete req.body["children"];
+      }
+
       const updatedLink = await prisma.link.update({
         where: { id: req.params.id },
         data: req.body,
@@ -22,41 +27,13 @@ export const updateLink = async (req: Request, res: Response) => {
   }
 };
 
-function buildLinkTree(links: any[]) {
-  const linkMap = new Map();
-  const tree: any[] = [];
-
-  // First, create a map of all links
-  links.forEach(link => {
-    linkMap.set(link.id, { ...link, children: [] });
-  });
-
-  // Then, build the tree structure
-  links.forEach(link => {
-    const node = linkMap.get(link.id);
-    if (link.parentId === null) {
-      tree.push(node);
-    } else {
-      const parent = linkMap.get(link.parentId);
-      if (parent) {
-        parent.children.push(node);
-      }
-    }
-  });
-
-  return tree;
-}
-
 export const getLinksBySection = async (req: Request, res: Response) => {
   try {
     const links = await prisma.link.findMany({
       where: {
         sectionId: req.params.sectionId,
       },
-      orderBy: [
-        { parentId: "asc" },
-        { order: "asc" }
-      ],
+      orderBy: [{ parentId: "asc" }, { order: "asc" }],
     });
     
     const linkTree = buildLinkTree(links);
@@ -91,10 +68,8 @@ export const createLink = async (req: Request, res: Response) => {
     const { href, label, children, parentId, sectionId, rel, target } =
       req.body;
 
-    console.log(req.body);
-
     const count = await prisma.link.count({
-      where: { sectionId, parentId: parentId ?? null },
+      where: { sectionId, parentId: parentId || null },
     });
 
     const newLink = await prisma.link.create({
@@ -102,7 +77,7 @@ export const createLink = async (req: Request, res: Response) => {
         href,
         label,
         children,
-        parentId,
+        parentId: parentId || null,
         sectionId,
         rel,
         target,

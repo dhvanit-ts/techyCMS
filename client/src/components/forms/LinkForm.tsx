@@ -31,6 +31,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -174,7 +175,7 @@ const LinkFormHandler = ({ link, setLinks, setOpen, setPages, selectedPage }: Om
           target: values.target,
           rel: values.rel,
           sectionId: values.sectionId,
-          parentId: values.parentId,
+          parentId: values.parentId === "selected_none_value" ? null : values.parentId ?? null,
           active: values.active ?? true,
           children: values.children?.map((c) => ({
             id: uuidv4(),
@@ -184,7 +185,7 @@ const LinkFormHandler = ({ link, setLinks, setOpen, setPages, selectedPage }: Om
             rel: c.rel,
             active: c.active ?? true,
             sectionId: c.sectionId,
-            parentId: c.parentId,
+            parentId: c.parentId === "selected_none_value" ? null : c.parentId ?? null,
             createdAt: new Date(),
             updatedAt: new Date(),
           })),
@@ -295,6 +296,10 @@ const LinkFormHandler = ({ link, setLinks, setOpen, setPages, selectedPage }: Om
                     <SelectValue placeholder="Select parent" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem disabled={links.length === 0} className="opacity-70" value="selected_none_value">
+                      None
+                    </SelectItem>
+                    <SelectSeparator />
                     {links.map((link) => (
                       <SelectItem key={link.id} value={link.id}>
                         {link.label}

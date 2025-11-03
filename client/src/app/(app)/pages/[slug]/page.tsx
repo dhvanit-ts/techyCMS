@@ -2,6 +2,8 @@
 import { fetchProject } from "@/utils/projectApis";
 import { IPage } from "@/types/IPage";
 import { notFound, redirect } from "next/navigation";
+import PublicHeader from "@/components/pages/PublicHeader";
+import PublicFooter from "@/components/pages/PublicFooter";
 
 interface PageProps {
   params: { slug: string };
@@ -23,10 +25,13 @@ export default async function ProjectPage({ params }: PageProps) {
   if (!project) notFound();
 
   return (
-    <div>
-      <div dangerouslySetInnerHTML={{ __html: project.html }} />
-      {/* If you're absolutely sure CSS is safe */}
-      <style dangerouslySetInnerHTML={{ __html: project.css }} />
-    </div>
+    <>
+      <PublicHeader />
+      <div>
+        <div dangerouslySetInnerHTML={{ __html: project.html }} />
+        <style dangerouslySetInnerHTML={{ __html: project.css }} />
+      </div>
+      <PublicFooter />
+    </>
   );
 }
