@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import prisma from "../db";
-import { buildLinkTree } from "../utils/buildLinkTree";
 
 export const getSections = async (req: Request, res: Response) => {};
 
@@ -40,9 +39,7 @@ export const getSection = async (req: Request, res: Response) => {
         id,
       },
       include: {
-        links: {
-          orderBy: [{ parentId: "asc" }, { order: "asc" }],
-        },
+        links: true,
       },
     });
 
@@ -50,10 +47,41 @@ export const getSection = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Section not found" });
     }
 
-    const links = buildLinkTree(section.links);
-    return res.status(200).json({ data: { ...section, links } });
+    return res.status(200).json({ data: section });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Failed to get section" });
+  }
+};
+
+export const updateSection = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { type, customCss, customHtml, profile, logo, mode } = req.body;
+
+    const updatedSection = await prisma.section.update({
+      where: {
+        id,
+      },
+      data: {
+        type,
+        customCss,
+        customHtml,
+        profile,
+        logo,
+        mode,
+      },
+    });
+
+    if (!updatedSection) {
+      return res.status(500).json({ error: "Failed to update section" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Section updated successfully", data: updatedSection });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update section" });
   }
 };
