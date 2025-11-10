@@ -66,6 +66,7 @@ model Section {
 
   profile String?
   logo String?
+  tabsPlacement TabsPlacement? @default(center)
 
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -97,7 +98,31 @@ model Page {
   @@index([slug])
 }
 
+model Blog {
+  id         String   @id @default(uuid())
+  title      String
+  slug       String   @unique
+  content    Json @db.Json
+  featuredImage String?
+  status     String
+  seoTitle   String
+  seoDescription String
+  metaImage  String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt()
+
+  @@index([id])
+  @@index([slug])
+}
+
 enum AuthType {
   oauth
   manual
+}
+
+enum TabsPlacement {
+  left
+  center
+  right
 }

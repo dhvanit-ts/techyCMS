@@ -18,6 +18,9 @@ export interface ISection {
   type: SectionType;
   mode: SectionMode;
   links: ILink[];
+  profile: string;
+  logo: string;
+  tabsPlacement: "left" | "center" | "right";
   customHtml?: string;
   customCss?: string;
   createdAt: Date;

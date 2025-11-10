@@ -11,6 +11,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import Image from 'next/image'
 
 function PublicHeader() {
 
@@ -69,14 +71,45 @@ function PublicHeader() {
         </>
         : <>
           <div className='flex justify-between items-center py-3 px-12 bg-zinc-100 border-b border-zinc-200'>
-            <div>
-              logo
+            {header?.tabsPlacement === "left" && <div className="flex justify-center items-center gap-4">
+              <div>
+                {header?.logo ? <Image src={header?.logo} height={12} width={12} alt="logo" className="w-12 h-12" /> : "logo"}
+              </div>
+              <NavigationMenu>
+                <NavigationMenuList>
+                  {renderNavLinks(header?.links || [])}
+                </NavigationMenuList>
+              </NavigationMenu>
             </div>
-            <NavigationMenu>
-              <NavigationMenuList>
-                {renderNavLinks(header?.links || [])}
-              </NavigationMenuList>
-            </NavigationMenu>
+            }
+            {header?.tabsPlacement !== "left" && <>
+              <div>
+                {header?.logo ? <Image src={header?.logo} height={12} width={12} alt="logo" className="w-12 h-12" /> : "logo"}
+              </div>
+              {header?.tabsPlacement === "right" && <input className="bg-zinc-200 rounded-md text-xs px-3 py-1.5" placeholder="Search something..." type="text" />}
+              <div className="flex gap-4">
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    {renderNavLinks(header?.links || [])}
+                  </NavigationMenuList>
+                </NavigationMenu>
+                {header?.profile && header.tabsPlacement === "right" &&
+                  <Avatar>
+                    <AvatarImage src="https://github.com/dhvanitmonpara.png" alt="@shadcn" />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                }
+              </div>
+            </>
+            }
+            {header?.tabsPlacement !== "right" && <div className="flex gap-4">
+              <input className="bg-zinc-200 rounded-md text-xs px-3 py-1.5" placeholder="Search something..." type="text" />
+              {header?.profile && <Avatar>
+                <AvatarImage src="https://github.com/dhvanitmonpara.png" alt="@shadcn" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>}
+            </div>
+            }
           </div>
         </>
       }

@@ -11,6 +11,7 @@ interface BaseOptions {
   returnNullIfError?: boolean;
   throwIfError?: boolean;
   finallyDoThis?: () => void;
+  headers?: Record<string, string>;
 }
 
 interface WithData extends BaseOptions {
@@ -49,12 +50,14 @@ class Fetcher {
     method: Method,
     endpointPath: string,
     data: unknown | undefined,
+    headers: Record<string, string>,
     options: BaseOptions & { returnNullIfError: true }
   ): Promise<T | null>;
   private async request<T>(
     method: Method,
     endpointPath: string,
     data: unknown | undefined,
+    headers: Record<string, string>,
     options: BaseOptions
   ): Promise<T>;
 
@@ -62,6 +65,7 @@ class Fetcher {
     method: Method,
     endpointPath: string,
     data: unknown | undefined,
+    headers: Record<string, string>,
     {
       statusShouldBe = 200,
       onError,
@@ -73,10 +77,18 @@ class Fetcher {
     }: BaseOptions
   ): Promise<T | null> {
     try {
+      let contentTypeHeader: Record<string, string> = {};
+
+      if (data instanceof FormData) {
+      } else {
+        contentTypeHeader = { "Content-Type": "application/json" };
+      }
+
       const response = await axios.request<T>({
         url: `${this.baseUrl}${endpointPath}`,
         method,
         data,
+        headers: { ...contentTypeHeader, ...headers },
         ...this.config,
       });
 
@@ -96,15 +108,33 @@ class Fetcher {
   }
 
   get = <T>(options: BaseOptions) => {
-    return this.request<T>("GET", options.endpointPath, undefined, options);
+    return this.request<T>(
+      "GET",
+      options.endpointPath,
+      undefined,
+      options.headers || {},
+      options
+    );
   };
 
   post = <T>(options: WithData) => {
-    return this.request<T>("POST", options.endpointPath, options.data, options);
+    return this.request<T>(
+      "POST",
+      options.endpointPath,
+      options.data,
+      options.headers || {},
+      options
+    );
   };
 
   delete = <T>(options: WithData) => {
-    return this.request<T>("DELETE", options.endpointPath, options.data, options);
+    return this.request<T>(
+      "DELETE",
+      options.endpointPath,
+      options.data,
+      options.headers || {},
+      options
+    );
   };
 
   patch = <T>(options: WithData) => {
@@ -112,6 +142,7 @@ class Fetcher {
       "PATCH",
       options.endpointPath,
       options.data,
+      options.headers || {},
       options
     );
   };

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../db";
+import { buildLinkTree } from "../utils/buildLinkTree";
 
 export const getSections = async (req: Request, res: Response) => {};
 
@@ -47,7 +48,8 @@ export const getSection = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Section not found" });
     }
 
-    return res.status(200).json({ data: section });
+    const linkTree = buildLinkTree(section.links);
+    return res.status(200).json({ data: { ...section, links: linkTree } });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Failed to get section" });
@@ -57,20 +59,12 @@ export const getSection = async (req: Request, res: Response) => {
 export const updateSection = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { type, customCss, customHtml, profile, logo, mode } = req.body;
 
     const updatedSection = await prisma.section.update({
       where: {
         id,
       },
-      data: {
-        type,
-        customCss,
-        customHtml,
-        profile,
-        logo,
-        mode,
-      },
+      data: { ...req.body },
     });
 
     if (!updatedSection) {

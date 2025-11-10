@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useHandleAuthError from "@/hooks/useHandleAuthError";
 import fetcher from "@/utils/fetcher";
 import { AxiosError } from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useLinkStore from "@/store/linkStore";
-import { ILink, ISection } from "@/types/ILink";
+import { ILink, ISection, SectionMode, SectionType } from "@/types/ILink";
 import { Spinner } from "@/components/ui/spinner";
 import LogoEditor from "@/components/editor/LogoEditor";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
@@ -18,6 +18,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+const codingLanguages: { value: "css" | "html"; label: string }[] = [
+  {
+    value: "html",
+    label: "HTML",
+  },
+  {
+    value: "css",
+    label: "CSS",
+  },
+];
 
 function ComponentsPage() {
   return (
@@ -55,7 +66,7 @@ interface ISettings {
   tabsPlacement: "left" | "center" | "right";
 }
 
-const TabsEditor = ({ id, section, setSection }: { id: string, section: ISettings, setSection: React.Dispatch<React.SetStateAction<ISettings>> }) => {
+const TabsEditor = ({ id, section, setSection, html, css }: { id: string, section: ISettings | null, setSection: React.Dispatch<React.SetStateAction<ISettings | null>>, html: string, css: string }) => {
   const [loading, setLoading] = useState(true);
   const { handleAuthError } = useHandleAuthError();
   const setLinks = useLinkStore((s) => s.setLinks);
@@ -89,16 +100,31 @@ const TabsEditor = ({ id, section, setSection }: { id: string, section: ISetting
           <FieldContent>
             <FieldLabel htmlFor="is-customizable">Custom</FieldLabel>
           </FieldContent>
-          <Switch
+          {section && <Switch
             id="is-customizable"
             onCheckedChange={(c) => setSection({ ...section, isCustom: c })}
-            checked={section.isCustom}
-          />
+            checked={section?.isCustom ?? false}
+          />}
         </Field>
       </div>
       <div>
-        {section.isCustom ? (
-          <CustomEditor />
+        {section?.isCustom ? (
+          <>
+            <CustomEditor html={html} css={css} id={id} />
+            <Header isCustom header={{
+              id: "",
+              customHtml: html,
+              customCss: css,
+              links: [],
+              logo: "",
+              type: "HEADER" as SectionType,
+              mode: "CUSTOM" as SectionMode,
+              profile: "",
+              tabsPlacement: "left",
+              updatedAt: new Date(),
+              createdAt: new Date()
+            }} tabs={section?.tabsPlacement} logo={section?.logo} profile={section?.isProfile} />
+          </>
         ) : (
           <div className="min-w-[40rem]">
             {
@@ -107,7 +133,7 @@ const TabsEditor = ({ id, section, setSection }: { id: string, section: ISetting
                   <Spinner />
                 </div>
               ) : (
-                <SortableCards sectionId={section.id} />
+                section?.id && <SortableCards sectionId={section?.id} />
               )}
           </div>
         )}
@@ -116,49 +142,63 @@ const TabsEditor = ({ id, section, setSection }: { id: string, section: ISetting
   );
 };
 
-const codingLanguages: { value: "css" | "html"; label: string }[] = [
-  {
-    value: "html",
-    label: "HTML",
-  },
-  {
-    value: "css",
-    label: "CSS",
-  },
-];
-
-const CustomEditor = () => {
+const CustomEditor = ({ id, html, css }: { id: string, html: string, css: string }) => {
+  const [loading, setLoading] = useState(false);
   const [code, setCode] = useState({
-    html: "",
-    css: "",
+    html: html || "",
+    css: css || "",
   });
+
+  const { handleAuthError } = useHandleAuthError()
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await fetcher.patch({
+        endpointPath: `/sections/${id}`,
+        data: { customHtml: code.html, customCss: code.css, mode: "CUSTOM" },
+        onSuccess: () => {
+          toast.success("Section updated successfully");
+        },
+      })
+    } catch (error) {
+      handleAuthError(error as AxiosError);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const setLangCode = (lang: "html" | "css", newCode: string) =>
     setCode((prev) => ({ ...prev, [lang]: newCode }));
 
   return (
-    <Tabs defaultValue="html">
-      <TabsList>
+    <>
+      <Tabs defaultValue="html">
+        <TabsList>
+          {codingLanguages.map((lang) => (
+            <TabsTrigger key={lang.value} value={lang.value}>
+              {lang.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         {codingLanguages.map((lang) => (
-          <TabsTrigger key={lang.value} value={lang.value}>
-            {lang.label}
-          </TabsTrigger>
+          <TabsContent value={lang.value} key={lang.value}>
+            <CodeEditor
+              code={code[lang.value]}
+              language={lang.value}
+              setCode={(newCode) => setLangCode(lang.value, newCode)}
+            />
+          </TabsContent>
         ))}
-      </TabsList>
-      {codingLanguages.map((lang) => (
-        <TabsContent value={lang.value} key={lang.value}>
-          <CodeEditor
-            code={code[lang.value]}
-            language={lang.value}
-            setCode={(newCode) => setLangCode(lang.value, newCode)}
-          />
-        </TabsContent>
-      ))}
-    </Tabs>
+      </Tabs>
+      <Button onClick={handleSave} className="mt-4">
+        {loading ? <><Spinner /> Saving...</> : "Save"}
+      </Button>
+    </>
   );
 }
 
-const Header = ({ header, tabs, profile, logo }: { header: ISection | null, tabs: "left" | "center" | "right", profile: boolean, logo: string }) => {
+const Header = ({ header, tabs, profile, logo, isCustom }: { header: ISection | null, tabs: "left" | "center" | "right", profile: boolean, logo: string, isCustom: boolean }) => {
   const renderNavLinks = (links: ILink[]) => {
     return links.map((link) => {
       const hasChildren = link.children && link.children.length > 0;
@@ -182,17 +222,48 @@ const Header = ({ header, tabs, profile, logo }: { header: ISection | null, tabs
     });
   };
 
+  function HeaderIframe({ header }: { header: ISection | null }) {
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    useEffect(() => {
+      const iframe = iframeRef.current;
+      if (!iframe || !header) return;
+
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) return
+      doc.open();
+      doc.write(`
+      <html>
+        <head>
+          ${header.customCss ? `<style>${header.customCss}</style>` : ""}
+        </head>
+        <body>
+          ${header.customHtml || ""}
+        </body>
+      </html>
+    `);
+      doc.close();
+    }, [header]);
+
+    return (
+      <iframe
+        ref={iframeRef}
+        style={{
+          width: "100%",
+          border: "none",
+          overflow: "hidden",
+        }}
+        sandbox="allow-same-origin allow-scripts"
+      />
+    );
+  }
+
   return (
     <div>
-      {header?.mode === "CUSTOM"
-        ? <>
-          {header && header.customHtml && (
-            <div dangerouslySetInnerHTML={{ __html: header.customHtml }} />
-          )}
-          {header && header.customCss &&
-            <style dangerouslySetInnerHTML={{ __html: header.customCss }} />
-          }
-        </>
+      {isCustom
+        ? <div className="mt-4">
+          <HeaderIframe header={header} />
+        </div>
         : <>
           <div className='flex justify-between items-center py-3 px-12 bg-zinc-100 border-b border-zinc-200'>
             {tabs === "left" && <div className="flex justify-center items-center gap-4">
@@ -242,22 +313,10 @@ const Header = ({ header, tabs, profile, logo }: { header: ISection | null, tabs
 }
 
 const SectionForm = ({ id }: { id: string }) => {
-  const [serverSettings, setServerSettings] = useState<ISettings>({
-    id,
-    isCustom: false,
-    isProfile: false,
-    logo: "",
-    tabsPlacement: "left",
-  });
+  const [serverSettings, setServerSettings] = useState<ISettings | null>(null);
   const [section, setSection] = useState<ISection | null>(null);
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<ISettings>({
-    id,
-    isCustom: false,
-    isProfile: false,
-    logo: "",
-    tabsPlacement: "left",
-  });
+  const [settings, setSettings] = useState<ISettings | null>(null);
 
   const { handleAuthError } = useHandleAuthError()
 
@@ -267,8 +326,14 @@ const SectionForm = ({ id }: { id: string }) => {
         const { data } = await fetcher.get<{ data: ISection }>({
           endpointPath: `/sections/${id}`,
           fallbackErrorMessage: "Error fetching section",
+          onError: () => {
+            toast.error("Section not found");
+          }
         });
         setSection(data);
+        const settingsData = { id: data.id, isCustom: data.mode === "CUSTOM", isProfile: !!data.profile, logo: data.logo, tabsPlacement: data.tabsPlacement }
+        setServerSettings(settingsData);
+        setSettings(settingsData);
       } catch (error) {
         handleAuthError(error as AxiosError);
       }
@@ -279,15 +344,19 @@ const SectionForm = ({ id }: { id: string }) => {
   const handleSave = async () => {
     try {
       setLoading(true)
-      const { data } = await fetcher.patch<{ data: ISection }>({
+      const data = { ...settings, mode: settings?.isCustom ? "CUSTOM" : "NORMAL" }
+      delete data["isProfile"]
+      delete data["isCustom"]
+      console.log(data)
+      await fetcher.patch<{ data: ISection }>({
         endpointPath: `/sections/${id}`,
-        data: settings,
+        data,
         fallbackErrorMessage: "Error updating section",
         onSuccess: () => {
           toast.success("Section updated successfully");
         }
       });
-      setSection(data);
+      setServerSettings(settings);
     } catch (error) {
       handleAuthError(error as AxiosError);
     } finally {
@@ -297,31 +366,32 @@ const SectionForm = ({ id }: { id: string }) => {
 
   const hasChanged = JSON.stringify(serverSettings) !== JSON.stringify(settings);
 
+  if (!settings) return null
+
   return (
     <div className="flex flex-col xl:flex-row justify-center xl:gap-4 max-w-6xl mb-24 mx-auto">
       <div className="flex-3 flex flex-col gap-4">
-        <TabsEditor section={settings} setSection={setSettings} id={id} />
-        <div>
-          <Tabs defaultValue="left" onValueChange={tab => setSettings({ ...settings, tabsPlacement: tab as "left" | "center" | "right" })}>
-            <div className="flex gap-4 items-center">
-              <div className="bg-zinc-100 rounded-full px-2 py-1 flex justify-center items-center gap-2">
-                <label htmlFor="profile-enable" className="text-sm">Profile</label>
-                <Switch
-                  defaultChecked={settings.isProfile}
-                  id="profile-enable"
-                  onCheckedChange={(checked) => setSettings({ ...settings, isProfile: checked })}
-                />
-              </div>
-              <TabsList>
-                <TabsTrigger value="left">Left</TabsTrigger>
-                <TabsTrigger value="center">Center</TabsTrigger>
-                <TabsTrigger value="right">Right</TabsTrigger>
-              </TabsList>
+        <TabsEditor section={settings} setSection={setSettings} html={section?.customHtml || ""} css={section?.customCss || ""} id={id} />
+        {!settings.isCustom && <Tabs defaultValue={settings.tabsPlacement} onValueChange={tab => setSettings({ ...settings, tabsPlacement: tab as "left" | "center" | "right" })}>
+          <div className="flex gap-4 items-center">
+            <div className="bg-zinc-100 rounded-full px-2 py-1 flex justify-center items-center gap-2">
+              <label htmlFor="profile-enable" className="text-sm">Profile</label>
+              <Switch
+                checked={settings.isProfile}
+                defaultChecked={settings.isProfile}
+                id="profile-enable"
+                onCheckedChange={(checked) => setSettings({ ...settings, isProfile: checked })}
+              />
             </div>
-            <Header header={section} tabs={settings.tabsPlacement} logo={settings.logo} profile={settings.isProfile} />
-          </Tabs>
-        </div>
-        {hasChanged && <div className="flex">
+            <TabsList>
+              <TabsTrigger value="left">Left</TabsTrigger>
+              <TabsTrigger value="center">Center</TabsTrigger>
+              <TabsTrigger value="right">Right</TabsTrigger>
+            </TabsList>
+          </div>
+          <Header isCustom={settings.isCustom} header={section} tabs={settings.tabsPlacement} logo={settings.logo} profile={settings.isProfile} />
+        </Tabs>}
+        {!settings.isCustom && hasChanged && <div className="flex">
           <Button onClick={handleSave}>
             {loading ? <><Spinner /> Saving...</> : "Save"}
           </Button>

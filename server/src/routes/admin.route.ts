@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import {
   registerUser,
   initializeUser,
@@ -18,6 +18,9 @@ import {
 import { verifyAdminJWT } from "../middlewares/auth.middleware";
 
 const router = Router();
+
+router.use(express.urlencoded( { extended: true, limit: "16kb" }));
+router.use(express.json({ limit: "10mb" }));
 
 router.route("/register").post(registerUser);
 router.route("/initialize").post(initializeUser);

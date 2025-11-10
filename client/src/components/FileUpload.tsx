@@ -2,10 +2,13 @@
 
 import { AlertCircleIcon, ImageUpIcon, XIcon } from "lucide-react"
 
-import { useFileUpload } from "@/hooks/use-file-upload"
+import { FileMetadata, useFileUpload } from "@/hooks/use-file-upload"
 import Image from "next/image"
+import { useState } from "react"
 
-export default function FileUpload() {
+export default function FileUpload({ onFileChange, initialFiles }: { onFileChange: (file: File | FileMetadata) => void; initialFiles?: FileMetadata[] }) {
+  const [image, setImage] = useState<string | null>(null)
+
   const maxSizeMB = 5
   const maxSize = maxSizeMB * 1024 * 1024 // 5MB default
 
@@ -23,9 +26,16 @@ export default function FileUpload() {
   ] = useFileUpload({
     accept: "image/*",
     maxSize,
+    initialFiles,
+    onFilesChange: (files) => {
+      if (files.length > 0) {
+        setImage(files[0]?.preview || null)
+        onFileChange(files[0]?.file || null)
+      } else {
+        setImage(null)
+      }
+    },
   })
-
-  const previewUrl = files[0]?.preview || null
 
   return (
     <div className="flex flex-col gap-2 border border-dashed border-zinc-400 rounded-lg">
@@ -39,17 +49,17 @@ export default function FileUpload() {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           data-dragging={isDragging || undefined}
-          className="relative flex min-h-60 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+          className="relative flex min-h-48 min-w-80 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
         >
           <input
             {...getInputProps()}
             className="sr-only"
             aria-label="Upload file"
           />
-          {previewUrl ? (
+          {image ? (
             <div className="absolute inset-0">
               <Image
-                src={previewUrl}
+                src={image}
                 width={300}
                 height={300}
                 alt={files[0]?.file?.name || "Uploaded logo"}
@@ -73,7 +83,7 @@ export default function FileUpload() {
             </div>
           )}
         </div>
-        {previewUrl && (
+        {image && (
           <div className="absolute top-4 right-4">
             <button
               type="button"

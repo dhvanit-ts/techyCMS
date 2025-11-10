@@ -9,10 +9,6 @@ export const updateLink = async (req: Request, res: Response) => {
     });
 
     if (link) {
-      if (req.body.children) {
-        delete req.body["children"];
-      }
-
       const updatedLink = await prisma.link.update({
         where: { id: req.params.id },
         data: req.body,
@@ -69,7 +65,7 @@ export const createLink = async (req: Request, res: Response) => {
       req.body;
 
     const count = await prisma.link.count({
-      where: { sectionId, parentId: parentId || null },
+      where: { sectionId, parentId: parentId ?? null },
     });
 
     const newLink = await prisma.link.create({
@@ -77,7 +73,7 @@ export const createLink = async (req: Request, res: Response) => {
         href,
         label,
         children,
-        parentId: parentId || null,
+        parentId,
         sectionId,
         rel,
         target,

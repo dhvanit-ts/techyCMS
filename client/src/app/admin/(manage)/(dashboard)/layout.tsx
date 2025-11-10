@@ -57,4 +57,8 @@ const links = [
     name: "Section",
     href: "/admin/section",
   },
+  {
+    name: "Blogs",
+    href: "/admin/blogs",
+  },
 ];
