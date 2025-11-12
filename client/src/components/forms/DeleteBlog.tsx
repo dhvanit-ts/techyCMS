@@ -11,39 +11,37 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { IComponent } from "@/types/IComponent";
+import { IBlog } from "@/types/IBlog";
 import fetcher from "@/utils/fetcher";
 import { AxiosError } from "axios";
 import { Dispatch, SetStateAction, useState } from "react";
 import { toast } from "sonner";
 
-function DeleteComponent({
+function DeleteBlog({
   children,
-  id,
-  name,
-  setComponents,
+  slug,
+  setBlogs,
 }: {
   children: React.ReactNode;
-  id: string;
-  name:string
-  setComponents: Dispatch<SetStateAction<IComponent[]>>;
+  slug: string;
+  setBlogs: Dispatch<SetStateAction<IBlog[]>>;
 }) {
-  const [typedName, setTypedName] = useState("");
+  const [typedSlug, setTypedSlug] = useState("");
 
-  const DeleteComponent = async () => {
-    const toastId = toast.loading("Deleting page...");
+  const DeleteBlog = async () => {
+    const toastId = toast.loading("Deleting blog...");
     try {
       await fetcher.delete({
-        endpointPath: `/components/${id}`,
-        data: { id },
+        endpointPath: `/blogs/${slug}`,
+        data: { slug },
         onSuccess: () => {
-          setComponents((prevComponents) => prevComponents.filter((c) => c.name !== name));
+          setBlogs((prevComponents) => prevComponents.filter((c) => c.slug !== slug));
           toast.success("Page deleted successfully")
         },
       });
     } catch (error: unknown) {
       console.log(error);
-      toast.error((error as AxiosError).message || "Failed to delete component");
+      toast.error((error as AxiosError).message || "Failed to delete blog");
     } finally {
       toast.dismiss(toastId);
     }
@@ -57,7 +55,7 @@ function DeleteComponent({
           <DialogTitle>Are you sure?</DialogTitle>
           <DialogDescription>
             This action cannot be undone. This will permanently delete the component
-            with <span className="text-red-600 font-semibold">{name}</span>{" "}
+            with <span className="text-red-600 font-semibold">{slug}</span>{" "}
             name. Type the component name below to confirm.
           </DialogDescription>
         </DialogHeader>
@@ -69,20 +67,20 @@ function DeleteComponent({
             <Input
               spellCheck={false}
               autoComplete="off"
-              value={typedName}
-              onChange={(e) => setTypedName(e.target.value)}
+              value={typedSlug}
+              onChange={(e) => setTypedSlug(e.target.value)}
               id="slug"
-              placeholder={name}
+              placeholder={slug}
             />
           </div>
         </div>
         <DialogFooter className="sm:justify-start">
           <DialogClose asChild>
             <Button
-              disabled={name !== typedName}
+              disabled={slug !== typedSlug}
               type="button"
               variant="destructive"
-              onClick={DeleteComponent}
+              onClick={DeleteBlog}
             >
               Delete
             </Button>
@@ -98,4 +96,4 @@ function DeleteComponent({
   );
 }
 
-export default DeleteComponent;
+export default DeleteBlog;

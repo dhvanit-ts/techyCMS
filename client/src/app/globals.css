@@ -1,10 +1,11 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @plugin "tailwind-scrollbar-hide";
 @import "tw-animate-css";
 
-@import '../styles/_variables.scss';
-@import '../styles/_keyframe-animations.scss';
+@import "../styles/_variables.scss";
+@import "../styles/_keyframe-animations.scss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -129,5 +130,57 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Wrap your blog content with the Tailwind typography baseline */
+  .tiptap {
+    @apply prose prose-neutral dark:prose-invert max-w-none;
+  }
+
+  .tiptap h1 {
+    @apply text-4xl font-bold text-blue-900;
+  }
+  .tiptap h2 {
+    @apply text-3xl font-semibold text-blue-800;
+  }
+  .tiptap blockquote {
+    @apply border-l-4 border-gray-300 pl-4 italic text-gray-600;
+  }
+  /* === Inline code (inside text paragraphs) === */
+  .tiptap p code {
+    @apply bg-gray-100 text-gray-800 rounded px-1 py-0.5 font-mono text-sm;
+  }
+
+  /* === Code block (<pre><code>...</code></pre>) === */
+  .tiptap pre {
+    @apply bg-zinc-100 text-zinc-800 rounded-xl border border-zinc-200 shadow-sm 
+         p-4 my-4 overflow-x-auto font-mono text-sm whitespace-pre leading-relaxed;
+  }
+
+  /* Make sure the inner <code> doesn’t override background */
+  .tiptap pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+
+  .tiptap pre {
+    @apply bg-zinc-100 border border-zinc-200 text-zinc-800 
+         rounded-xl shadow-sm p-4 my-4 overflow-x-auto 
+         font-mono text-sm whitespace-pre leading-relaxed;
+  }
+
+  .tiptap pre::after {
+    content: "Copy";
+    @apply absolute top-2 right-3 text-xs text-zinc-400 opacity-0 transition-opacity duration-200 cursor-pointer;
+  }
+
+  .tiptap pre:hover::after {
+    @apply opacity-100;
+  }
+
+  images * .tiptap ul {
+    @apply list-disc pl-5;
+  }
+  .tiptap img {
+    @apply rounded-lg;
   }
 }

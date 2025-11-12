@@ -84,17 +84,17 @@ export const updateBlog = async (
 ) => {
   try {
     const blog = await prisma.blog.findUnique({
-      where: { slug: req.params.slug },
+      where: { id: req.params.id },
     });
     if (!blog) {
       throw new ApiError(404, "Blog not found");
     }
     const updatedBlog = await prisma.blog.update({
-      where: { slug: req.params.slug },
+      where: { id: req.params.id },
       data: req.body,
     });
     return res
-      .status(200)
+      .status(201)
       .json(new ApiResponse(200, updatedBlog, "Blog updated successfully"));
   } catch (error) {
     return res.status(500).json({ error: "Failed to update blog" });

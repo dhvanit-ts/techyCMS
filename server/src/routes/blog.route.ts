@@ -18,7 +18,7 @@ router.post(
   createBlog
 );
 router.patch(
-  "/:slug",
+  "/:id",
   upload.fields([
     { name: "featuredImage", maxCount: 1 },
     { name: "metaImage", maxCount: 1 },

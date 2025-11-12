@@ -7,7 +7,7 @@ import Image from "next/image"
 import { useState } from "react"
 
 export default function FileUpload({ onFileChange, initialFiles }: { onFileChange: (file: File | FileMetadata) => void; initialFiles?: FileMetadata[] }) {
-  const [image, setImage] = useState<string | null>(null)
+  const [image, setImage] = useState<string | null>(initialFiles?.[0]?.url || null)
 
   const maxSizeMB = 5
   const maxSize = maxSizeMB * 1024 * 1024 // 5MB default

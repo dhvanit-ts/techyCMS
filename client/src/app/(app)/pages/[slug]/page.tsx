@@ -1,4 +1,3 @@
-// app/projects/[slug]/page.tsx
 import { fetchProject } from "@/utils/projectApis";
 import { IPage } from "@/types/IPage";
 import { notFound, redirect } from "next/navigation";

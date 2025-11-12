@@ -1,174 +1,157 @@
-"use client"
+"use client";
 
-import FileUpload from '@/components/FileUpload';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor'
-import { Button } from '@/components/ui/button';
-import { Field, FieldContent, FieldLabel } from '@/components/ui/field';
-import { Form } from '@/components/ui/form'
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
-import { blogFormSchema, IBlog } from '@/types/IBlog';
-import fetcher from '@/utils/fetcher';
-import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useCallback, useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form';
-import { JSONContent } from "@tiptap/react"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import buildImageUrl from '@/utils/buildImageUrl';
+import TooltipWrapper from "@/components/TooltipWrapper";
+import { Button } from "@/components/ui/button";
+import useHandleAuthError from "@/hooks/useHandleAuthError";
+import { cn } from "@/lib/utils";
+import fetcher from "@/utils/fetcher";
+import { AxiosError } from "axios";
+import Link from "next/link";
+import React, { useCallback, useEffect, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
+import { MdDelete, MdEdit } from "react-icons/md";
+import { Spinner } from "@/components/ui/spinner";
+import { IBlog } from "@/types/IBlog";
+import BlogPreview from "@/components/previews/BlogPreview";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { IoMdEye } from "react-icons/io";
+import { VisuallyHidden } from "radix-ui";
+import DeleteBlog from "@/components/forms/DeleteBlog";
 
-function Blogs() {
-  const [loading, setLoading] = useState(false);
-  const form = useForm<IBlog>({
-    resolver: zodResolver(blogFormSchema),
-    defaultValues: {
-      featuredImage: buildImageUrl("1762771971643-vip.8927dc8.svg")
-    }
-  });
+function BlogPage() {
+  const [blogs, setBlogs] = useState<IBlog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { setValue } = form
+  const { handleAuthError } = useHandleAuthError();
 
-  const onSubmit = async (data: IBlog) => {
-
-    const formData = new FormData();
-
-    formData.append("title", data.title);
-    formData.append("slug", data.slug);
-    formData.append("status", data.status);
-    formData.append("seoTitle", data.seoTitle);
-    formData.append("seoDescription", data.seoDescription);
-    formData.append("content", JSON.stringify(data.content));
-    formData.append("metaImage", data.metaImage);
-    formData.append("featuredImage", data.featuredImage);
-
+  const fetchPages = useCallback(async () => {
     setLoading(true);
-    await fetcher.post({
-      endpointPath: "/blogs",
-      data: formData,
-      statusShouldBe: 201,
-      fallbackErrorMessage: "Error creating blog page",
-      finallyDoThis: () => {
-        setLoading(false);
-      }
-    })
-  }
+    try {
+      const data = (await fetcher.get<{ data: IBlog[] }>({
+        endpointPath: "/blogs",
+        returnNullIfError: true,
+        statusShouldBe: 200,
+        fallbackErrorMessage: "Error fetching blogs",
+      })) as { data: IBlog[] };
 
-  const slugTransform = useCallback((value: string) => {
-    if (value && typeof value === "string")
-      return value
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-
-    return "";
+      setBlogs(data?.data ?? []);
+    } catch (error) {
+      handleAuthError(error as AxiosError);
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const title = useWatch({ control: form.control, name: "title" });
-
   useEffect(() => {
-    setValue("slug", slugTransform(title || ""), { shouldValidate: true });
-  }, [title, slugTransform, setValue]);
+    fetchPages();
+  }, [fetchPages]);
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className='flex flex-col sm:flex-row px-4 sm:px-0 justify-center my-12'
-      >
-        <div
-          className="space-y-8 sm:p-4 max-w-3xl"
-        >
-          <Field>
-            <FieldLabel htmlFor="title">Title</FieldLabel>
-            <FieldContent>
-              <Input id='title' placeholder="Title" {...form.register("title")} />
-            </FieldContent>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="slug">Slug</FieldLabel>
-            <FieldContent>
-              <Input id='slug' readOnly placeholder='your slug will get generated and appeared here' {...form.register("slug")} />
-            </FieldContent>
-          </Field>
-          <div className='border border-zinc-400/50 rounded-xl sm:overflow-hidden'>
-            <SimpleEditor setContent={content => form.setValue("content", content)} content={form.watch("content") as JSONContent} />
-          </div>
-          <Field>
-            <FieldLabel htmlFor="seoTitle">SEO Title</FieldLabel>
-            <FieldContent>
-              <Input id='seoTitle' placeholder='SEO Title' {...form.register("seoTitle")} />
-            </FieldContent>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="seoDescription">SEO Description</FieldLabel>
-            <FieldContent>
-              <Input id='seoDescription' placeholder='SEO Description' {...form.register("seoDescription")} />
-            </FieldContent>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="seoDescription">Status</FieldLabel>
-            <FieldContent>
-              <Select value={form.watch("status")} onValueChange={v => setValue("status", v as "draft" | "published")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a page" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
+    <div className="px-4 pt-12">
+      <h1 className="text-3xl font-semibold text-zinc-900 mb-4 flex justify-between">
+        <span>Blogs</span>
+        <span className="text-zinc-800">Total: {blogs.length}</span>
+        <Button asChild size="sm">
+          <Link href="/admin/blogs/create">
+            <FaPlus />
+            Create
+          </Link>
+        </Button>
+      </h1>
+      {loading ? (
+        <div className="flex justify-center items-center h-96">
+          <Spinner className="size-6" />
         </div>
-        <div className="space-y-8 p-4 max-w-3xl">
-          <div className='space-y-2'>
-            <h3>Featured Image</h3>
-            <FileUpload
-              initialFiles={[
-                {
-                  id: "featured-image",
-                  name: "featured-image",
-                  size: 300,
-                  type: "image/svg+xml",
-                  url: buildImageUrl("1762771971643-vip.8927dc8.svg"),
-                }
-              ]}
-              onFileChange={(file) => {
-                setValue("featuredImage", file)
-              }}
-            />
-          </div>
-          <div className='space-y-2'>
-            <h3>Meta Image</h3>
-            <FileUpload
-              initialFiles={[
-                {
-                  id: "featured-image",
-                  name: 'featuredImage',
-                  size: 1540,
-                  type: "image/svg+xml",
-                  url: buildImageUrl("1762771971643-vip.8927dc8.svg"),
-                }
-              ]}
-              onFileChange={(file) => {
-                setValue("metaImage", file)
-              }}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Button disabled={loading} type='submit'>
-              {loading ? <><Spinner /> Saving...</> : "Save"}
-            </Button>
-          </div>
+      ) : blogs.length === 0 ? (
+        <div className="text-zinc-700">No blogs available.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-zinc-300 rounded-md overflow-hidden">
+            <thead className="bg-zinc-300">
+              <tr>
+                <th className="text-left px-4 py-2">Title</th>
+                <th className="text-left px-4 py-2">Status</th>
+                <th className="text-left px-4 py-2">Created At</th>
+                <th className="text-left px-4 py-2">Updated At</th>
+                <th className="text-left px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {blogs.map((blog) => (
+                <tr
+                  key={blog.id}
+                  className="border-b border-zinc-200 bg-zinc-100/80 hover:bg-zinc-100"
+                >
+                  <td className="px-4 py-2">
+                    <span>{blog.title}</span>
+                  </td>
+                  <td className="px-4 py-2 capitalize">
+                    <span
+                      className={cn("text-sm px-1.5 py-[0.5px] rounded-md")}
+                    >
+                      {blog.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    {new Date(blog.createdAt ?? "").toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2">
+                    {new Date(blog.updatedAt ?? "").toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2 flex items-center gap-2">
+                    <TooltipWrapper delayDuration={500} tooltip="Preview Blog">
+                      <Sheet>
+                        <SheetTrigger>
+                          <Button variant="ghost" className="hover:bg-zinc-200 group" size="icon-sm">
+                            <IoMdEye />
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent className="space-y-4 sm:max-w-[1300px]">
+                          <VisuallyHidden.Root>
+                            <SheetHeader>
+                              <SheetTitle>{blog.title}</SheetTitle>
+                              <SheetDescription>
+                                {`Preview of blog: ${blog.slug}`}
+                              </SheetDescription>
+                            </SheetHeader>
+                          </VisuallyHidden.Root>
+                          <BlogPreview slug={blog.slug} />
+                        </SheetContent>
+                      </Sheet>
+                    </TooltipWrapper>
+                    <TooltipWrapper delayDuration={500} tooltip="Edit Blog">
+                      <Button
+                        variant="ghost"
+                        className="hover:bg-zinc-200 group"
+                        size="icon-sm"
+                        asChild
+                      >
+                        <Link href={`/admin/blogs/edit/${blog.slug}`}>
+                          <MdEdit />
+                        </Link>
+                      </Button>
+                    </TooltipWrapper>
+                    <TooltipWrapper delayDuration={500} tooltip="Delete Blog">
+                      <DeleteBlog setBlogs={setBlogs} slug={blog.slug}>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="group text-red-600 hover:bg-red-600 hover:text-zinc-100"
+                        >
+                          <MdDelete />
+                        </Button>
+                      </DeleteBlog>
+                    </TooltipWrapper>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <p>
-          {form.formState.errors.root?.message}
-        </p>
-      </form>
-    </Form>
-  )
+      )}
+    </div>
+  );
 }
 
-export default Blogs
+export default BlogPage;
